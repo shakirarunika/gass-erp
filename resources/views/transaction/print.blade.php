@@ -107,33 +107,44 @@
     <div class="info-container">
         <div class="info-item">
             <span class="info-label">Tanggal Transaksi</span>
-            <span class="info-value">{{ $transaction->created_at->format('d F Y') }}</span>
-            <br>
-            <small style="color: #666">Jam: {{ $transaction->created_at->format('H:i') }} WIB</small>
+            <@php
+                $trxDate = $transaction->trx_date ? \Illuminate\Support\Carbon::parse($transaction->trx_date) : null;
+                $trxTime =
+                    $trxDate && $trxDate->format('H:i') !== '00:00'
+                        ? $trxDate->format('H:i')
+                        : $transaction->created_at->format('H:i');
+            @endphp <span class="info-value">{{ $trxDate?->format('d F Y') }}</span>
+                <br>
+                <<small style="color: #666">Jam: {{ $trxTime }} WIB</small>
         </div>
 
         <div class="info-item">
             <span class="info-label">Jenis Transaksi</span>
             <span class="info-value">
-                @if($transaction->category == 'USAGE') PEMAKAIAN USER
-                @elseif($transaction->category == 'CSR') SUMBANGAN / CSR
-                @elseif($transaction->category == 'SCRAP') PEMUSNAHAN (SCRAP)
-                @elseif($transaction->category == 'PURCHASE') PEMBELIAN
-                @else {{ $transaction->category ?? $transaction->type }}
+                @if ($transaction->category == 'USAGE')
+                    PEMAKAIAN USER
+                @elseif($transaction->category == 'CSR')
+                    SUMBANGAN / CSR
+                @elseif($transaction->category == 'SCRAP')
+                    PEMUSNAHAN (SCRAP)
+                @elseif($transaction->category == 'PURCHASE')
+                    PEMBELIAN
+                @else
+                    {{ $transaction->category ?? $transaction->type }}
                 @endif
             </span>
 
-            @if($transaction->department)
-            <div style="margin-top: 8px;">
-                <span class="info-label">Departemen</span>
-                <span class="info-value">{{ $transaction->department->name }}</span>
-            </div>
+            @if ($transaction->department)
+                <div style="margin-top: 8px;">
+                    <span class="info-label">Departemen</span>
+                    <span class="info-value">{{ $transaction->department->name }}</span>
+                </div>
             @endif
-            @if($transaction->supplier)
-            <div style="margin-top: 8px;">
-                <span class="info-label">Vendor</span>
-                <span class="info-value">{{ $transaction->supplier->name }}</span>
-            </div>
+            @if ($transaction->supplier)
+                <div style="margin-top: 8px;">
+                    <span class="info-label">Vendor</span>
+                    <span class="info-value">{{ $transaction->supplier->name }}</span>
+                </div>
             @endif
         </div>
 
@@ -155,24 +166,24 @@
             </tr>
         </thead>
         <tbody>
-            @foreach($transaction->details as $index => $detail)
-            <tr>
-                <td style="text-align: center;">{{ $index + 1 }}</td>
-                <td>{{ $detail->item->code }}</td>
-                <td>{{ $detail->item->name }}</td>
-                <td style="text-align: center; font-weight: bold;">{{ $detail->quantity }}</td>
-                <td>{{ $detail->item->unit->name ?? '-' }}</td>
-            </tr>
+            @foreach ($transaction->details as $index => $detail)
+                <tr>
+                    <td style="text-align: center;">{{ $index + 1 }}</td>
+                    <td>{{ $detail->item->code }}</td>
+                    <td>{{ $detail->item->name }}</td>
+                    <td style="text-align: center; font-weight: bold;">{{ $detail->quantity }}</td>
+                    <td>{{ $detail->item->unit->name ?? '-' }}</td>
+                </tr>
             @endforeach
         </tbody>
 
     </table>
 
-    @if($transaction->description)
-    <div style="margin-bottom: 30px; padding: 10px; border: 1px dashed #ccc; background-color: #fafafa;">
-        <strong>Catatan:</strong><br>
-        <span style="white-space: pre-line;">{{ $transaction->description }}</span>
-    </div>
+    @if ($transaction->description)
+        <div style="margin-bottom: 30px; padding: 10px; border: 1px dashed #ccc; background-color: #fafafa;">
+            <strong>Catatan:</strong><br>
+            <span style="white-space: pre-line;">{{ $transaction->description }}</span>
+        </div>
     @endif
 
     <div class="signatures">
