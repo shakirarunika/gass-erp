@@ -38,9 +38,13 @@ class StockOpnameResource extends Resource
                             ->disabled(function (Get $get) {
                                 $details = $get('details') ?? [];
 
-                                return collect($details)->contains(
-                                    fn($detail) => filled($detail['item_id'] ?? null)
-                                );
+                                return collect($details)->contains(function ($detail) {
+                                    if (! is_array($detail)) {
+                                        return false;
+                                    }
+
+                                    return filled($detail['item_id'] ?? null);
+                                });
                             })
                             ->afterStateUpdated(function ($state, Set $set) {
                                 if (! $state) return;
