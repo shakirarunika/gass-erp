@@ -29,9 +29,12 @@ class CategoryValueChart extends ChartWidget
                 return $totalQty * $item->avg_cost;
             });
 
-            // Hanya masukkan yang nilainya di atas 0 agar chart tidak penuh sampah
             if ($categoryValuation > 0) {
-                $labels[] = $category->name;
+                $labels[] = sprintf(
+                    '%s (%s)',
+                    $category->name,
+                    $this->formatRupiahCompact($categoryValuation)
+                );
                 $values[] = $categoryValuation;
             }
         }
@@ -103,5 +106,24 @@ class CategoryValueChart extends ChartWidget
                 ],
             ],
         ];
+    }
+
+    private function formatRupiahCompact(float $value): string
+    {
+        $absValue = abs($value);
+
+        if ($absValue >= 1_000_000_000) {
+            return 'Rp' . number_format($value / 1_000_000_000, 1, ',', '.') . ' M';
+        }
+
+        if ($absValue >= 1_000_000) {
+            return 'Rp' . number_format($value / 1_000_000, 1, ',', '.') . ' Jt';
+        }
+
+        if ($absValue >= 1_000) {
+            return 'Rp' . number_format($value / 1_000, 1, ',', '.') . ' Rb';
+        }
+
+        return 'Rp' . number_format($value, 0, ',', '.');
     }
 }
