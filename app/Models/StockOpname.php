@@ -16,7 +16,14 @@ class StockOpname extends Model
         'status',
         'code'
     ];
-
+    protected static function booted()
+    {
+        static::creating(function ($model) {
+            // Otomatis bikin nomor: SO-202601-001
+            $number = static::whereMonth('created_at', now()->month)->count() + 1;
+            $model->code = 'SO-' . now()->format('Ym') . '-' . str_pad($number, 3, '0', STR_PAD_LEFT);
+        });
+    }
     // INI DIA YANG BIKIN ERROR 500 KALAU ILANG!
     public function details(): HasMany
     {
