@@ -43,6 +43,7 @@ class StockOpnameResource extends Resource
                                 $details = $get('details') ?? [];
                                 return collect($details)->contains(fn($item) => filled($item['item_id'] ?? null));
                             })
+                            ->dehydrated()
                             ->afterStateUpdated(function ($state, Set $set) {
                                 if (! $state) {
                                     $set('details', []);
