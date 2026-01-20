@@ -35,7 +35,13 @@ class StockOpnameResource extends Resource
                             ->required()
                             ->live()
                             // PERBAIKAN: Aktifkan disabled jika sudah ada detail barang agar data tidak tertimpa tidak sengaja
-                            ->disabled(fn(Get $get) => count($get('details') ?? []) > 0)
+                            ->disabled(function (Get $get) {
+                                $details = $get('details') ?? [];
+
+                                return collect($details)->contains(
+                                    fn($detail) => filled($detail['item_id'] ?? null)
+                                );
+                            })
                             ->afterStateUpdated(function ($state, Set $set) {
                                 if (! $state) return;
 
@@ -79,6 +85,7 @@ class StockOpnameResource extends Resource
                     ->schema([
                         Forms\Components\Repeater::make('details')
                             ->relationship()
+                            ->defaultItems(0)
                             ->schema([
                                 Forms\Components\Select::make('item_id')
                                     ->relationship('item', 'name')
