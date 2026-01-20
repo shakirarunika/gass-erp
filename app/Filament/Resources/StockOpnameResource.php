@@ -38,12 +38,18 @@ class StockOpnameResource extends Resource
                             ->live()
                             ->searchable()
                             ->preload()
-                            // Kunci gudang jika sudah ada detail barang
-                            ->disabled(fn(Get $get) => filled($get('details')))
+                            // 👇 PERBAIKAN LOGIC: Hanya kunci jika ada item yang punya item_id
+                            ->disabled(function (Get $get) {
+                                $details = $get('details') ?? [];
+                                return collect($details)->contains(fn($item) => filled($item['item_id'] ?? null));
+                            })
                             ->afterStateUpdated(function ($state, Set $set) {
-                                if (! $state) return;
+                                if (! $state) {
+                                    $set('details', []);
+                                    return;
+                                }
 
-                                // Tarik stok fisik terakhir dari gudang Sentul atau lainnya
+                                // Ambil stok dari gudang terpilih
                                 $stokGudang = InventoryStock::where('warehouse_id', $state)->get();
 
                                 $dataRepeater = $stokGudang->map(fn($stock) => [
@@ -55,7 +61,7 @@ class StockOpnameResource extends Resource
 
                                 $set('details', $dataRepeater);
                             })
-                            ->helperText('Hapus list barang di bawah jika ingin mengganti gudang.'),
+                            ->helperText('Dropdown terkunci jika sudah ada barang di daftar. Hapus barang untuk ganti gudang.'),
 
                         Forms\Components\DatePicker::make('opname_date')
                             ->label('Tanggal Audit')
