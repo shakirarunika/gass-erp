@@ -4,9 +4,30 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class StockOpname extends Model
 {
+    protected function accuracy(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                // Ambil jumlah baris detail
+                $total = $this->details()->count();
+
+                // Kalau belum ada barang, anggap akurasi 100% (atau 0% terserah kebijakan lo)
+                if ($total === 0) return 100;
+
+                // Hitung yang jumlah FISIK-nya SAMA dengan SISTEM
+                $matchCount = $this->details()
+                    ->whereRaw('physical_qty = system_qty')
+                    ->count();
+
+                // Rumus: (Jumlah Cocok / Total Barang) * 100
+                return round(($matchCount / $total) * 100, 2);
+            },
+        );
+    }
     protected $fillable = ['warehouse_id', 'opname_date', 'reason', 'status', 'code'];
 
     // 👇 Tambahkan ini biar 'code' terisi otomatis (SO-202601-001)

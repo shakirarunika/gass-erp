@@ -146,10 +146,16 @@ class StockOpnameResource extends Resource
                     ->label('Total Item')
                     ->state(fn(StockOpname $record) => $record->details()->count()),
 
-                Tables\Columns\TextColumn::make('accuracy_label')
-                    ->label('Akurasi')
-                    ->state(fn(StockOpname $record) => $record->accuracy . '%')
-                    ->color(fn($state) => (float)$state < 90 ? 'danger' : 'success'),
+                Tables\Columns\TextColumn::make('accuracy')
+                    ->label('Akurasi Audit')
+                    ->state(fn(StockOpname $record): string => $record->accuracy . '%')
+                    ->badge()
+                    ->color(fn($state) => match (true) {
+                        (float) $state >= 95 => 'success', // Hijau kalau sangat akurat
+                        (float) $state >= 80 => 'warning', // Kuning kalau ada selisih dikit
+                        default => 'danger',               // Merah kalau gudang lo berantakan
+                    })
+                    ->sortable(),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
