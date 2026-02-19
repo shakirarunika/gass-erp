@@ -154,8 +154,7 @@ class StockOpnameResource extends Resource
                         (float) $state >= 95 => 'success', // Hijau kalau sangat akurat
                         (float) $state >= 80 => 'warning', // Kuning kalau ada selisih dikit
                         default => 'danger',               // Merah kalau gudang lo berantakan
-                    })
-                    ->sortable(),
+                    }),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')

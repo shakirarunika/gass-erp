@@ -40,7 +40,7 @@ class PlantResource extends Resource
                             ->required()
                             ->unique(ignoreRecord: true)
                             ->maxLength(10)
-                            ->placeholder('Contoh: SNTL')
+                            ->placeholder('Contoh: STL')
                             // Validasi: Hanya Huruf Besar & Angka (Tanpa Spasi)
                             ->regex('/^[A-Z0-9]+$/')
                             ->validationMessages([
