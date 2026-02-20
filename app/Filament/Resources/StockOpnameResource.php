@@ -15,9 +15,6 @@ use Filament\Forms\Get;
 use Filament\Forms\Set;
 use Illuminate\Support\HtmlString;
 use Illuminate\Database\Eloquent\Builder;
-use pxlrbt\FilamentExcel\Actions\Tables\ExportAction;
-use pxlrbt\FilamentExcel\Exports\ExcelExport;
-use pxlrbt\FilamentExcel\Columns\Column;
 
 class StockOpnameResource extends Resource
 {
@@ -166,8 +163,6 @@ class StockOpnameResource extends Resource
             ->actions([
                 Tables\Actions\EditAction::make(),
                 // ... Aksi Download Excel lo yang lama sudah OK
-
-
             ]);
     }
 
