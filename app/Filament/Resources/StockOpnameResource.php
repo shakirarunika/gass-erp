@@ -2,8 +2,6 @@
 
 namespace App\Filament\Resources;
 
-die('Gua lagi di file ini!');
-
 use App\Filament\Resources\StockOpnameResource\Pages;
 use App\Models\StockOpname;
 use App\Models\InventoryStock;
