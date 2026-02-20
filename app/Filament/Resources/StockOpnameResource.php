@@ -173,23 +173,25 @@ class StockOpnameResource extends Resource
                     ->icon('heroicon-o-document-arrow-down')
                     ->color('info')
                     ->action(function ($record) {
-                        // Logic: Tarik data dari InventoryStock berdasarkan gudang SO ini
-                        return (new ExportAction())->exports([
-                            ExcelExport::make()
-                                ->fromQuery(
-                                    InventoryStock::where('warehouse_id', $record->warehouse_id)
-                                        ->with(['item.category'])
-                                )
-                                ->withFilename("Form_SO_{$record->warehouse->name}_" . date('Y-m-d'))
-                                ->withColumns([
-                                    Column::make('item.category.name')->heading('Kategori'),
-                                    Column::make('item.name')->heading('Nama Barang'),
-                                    Column::make('rack_location')->heading('Lokasi Rak'),
-                                    // MENTOR TIP: Kosongkan kolom qty fisik biar mereka hitung beneran!
-                                    Column::make('qty_fisik')->heading('Jumlah Fisik (Isi Manual)')->formatStateUsing(fn() => ''),
-                                    Column::make('note')->heading('Catatan Lapangan')->formatStateUsing(fn() => ''),
-                                ]),
-                        ])->execute();
+                        // 👇 Gunakan ::make('nama_bebas') dan pastikan terpanggil dengan benar
+                        return \pxlrbt\FilamentExcel\Actions\Tables\ExportAction::make('download_so')
+                            ->exports([
+                                ExcelExport::make()
+                                    ->fromQuery(
+                                        // 👇 Gunakan closure fn() agar query dieksekusi saat tombol diklik
+                                        fn() => \App\Models\InventoryStock::where('warehouse_id', $record->warehouse_id)
+                                            ->with(['item.category'])
+                                    )
+                                    ->withFilename("Form_SO_{$record->warehouse->name}_" . date('Y-m-d'))
+                                    ->withColumns([
+                                        \pxlrbt\FilamentExcel\Columns\Column::make('item.category.name')->heading('Kategori'),
+                                        \pxlrbt\FilamentExcel\Columns\Column::make('item.name')->heading('Nama Barang'),
+                                        \pxlrbt\FilamentExcel\Columns\Column::make('rack_location')->heading('Lokasi Rak'),
+                                        \pxlrbt\FilamentExcel\Columns\Column::make('qty_fisik')->heading('Jumlah Fisik')->formatStateUsing(fn() => ''),
+                                        \pxlrbt\FilamentExcel\Columns\Column::make('note')->heading('Catatan')->formatStateUsing(fn() => ''),
+                                    ]),
+                            ])
+                            ->execute(); // Jalankan proses download-nya
                     }),
             ]);
     }
