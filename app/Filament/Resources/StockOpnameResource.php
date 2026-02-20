@@ -161,34 +161,30 @@ class StockOpnameResource extends Resource
                     ->label('Download Form SO')
                     ->icon('heroicon-o-document-arrow-down')
                     ->color('success')
-                    // Popup modal buat pilih gudang mana yang mau di-opname
                     ->form([
                         Forms\Components\Select::make('warehouse_id')
                             ->label('Pilih Gudang untuk SO')
                             ->relationship('warehouse', 'name')
-                            ->required()
-                            ->searchable()
-                            ->preload(),
+                            ->required(),
                     ])
                     ->exports([
                         ExcelExport::make()
-                            // 👇 PENTING: Paksa export ini ambil data dari Model InventoryStock, bukan StockOpname
-                            ->fromModel(\App\Models\InventoryStock::class)
-                            // 👇 Filter datanya sesuai gudang yang dipilih di modal tadi
-                            ->modifyQueryUsing(
-                                fn($query, $data) =>
-                                $query->where('warehouse_id', $data['warehouse_id'])
-                                    ->with(['item.category', 'item.unit', 'warehouse'])
-                            )
+                            // 1. Paksa ambil dari model InventoryStock (Bukan StockOpname)
+                            ->fromModel(InventoryStock::class)
+                            // 2. Gunakan query modifier yang lebih aman
+                            ->modifyQueryUsing(function (Builder $query, $data) {
+                                // $data di sini otomatis berisi hasil inputan Select warehouse_id tadi
+                                return $query->where('warehouse_id', $data['warehouse_id'])
+                                    ->with(['item.category', 'item.unit', 'warehouse']);
+                            })
                             ->withFilename('Form_SO_' . date('Y-m-d'))
-                            // 👇 Mapping kolom supaya isinya Nama Barang, Kategori, dll.
                             ->withColumns([
+                                Column::make('warehouse.name')->heading('Gudang'),
                                 Column::make('item.category.name')->heading('Kategori'),
-                                Column::make('item.code')->heading('Kode Barang'),
                                 Column::make('item.name')->heading('Nama Barang'),
                                 Column::make('quantity')->heading('Stok Sistem'),
                                 Column::make('item.unit.name')->heading('Satuan'),
-                                // Kolom kosong untuk coret-coret petugas
+                                // Kolom kosong untuk diisi petugas
                                 Column::make('qty_fisik')->heading('Stok Fisik (Isi Manual)')->formatStateUsing(fn() => ''),
                                 Column::make('keterangan')->heading('Keterangan')->formatStateUsing(fn() => ''),
                             ]),
