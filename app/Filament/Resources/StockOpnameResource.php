@@ -15,6 +15,9 @@ use Filament\Forms\Get;
 use Filament\Forms\Set;
 use Illuminate\Support\HtmlString;
 use Illuminate\Database\Eloquent\Builder;
+use pxlrbt\FilamentExcel\Actions\Tables\ExportAction;
+use pxlrbt\FilamentExcel\Exports\ExcelExport;
+use pxlrbt\FilamentExcel\Columns\Column;
 
 class StockOpnameResource extends Resource
 {
@@ -163,6 +166,31 @@ class StockOpnameResource extends Resource
             ->actions([
                 Tables\Actions\EditAction::make(),
                 // ... Aksi Download Excel lo yang lama sudah OK
+
+                // TOMBOL SAKTI LU DISINI
+                Tables\Actions\Action::make('download_form')
+                    ->label('Download Form')
+                    ->icon('heroicon-o-document-arrow-down')
+                    ->color('info')
+                    ->action(function ($record) {
+                        // Logic: Tarik data dari InventoryStock berdasarkan gudang SO ini
+                        return (new ExportAction())->exports([
+                            ExcelExport::make()
+                                ->fromQuery(
+                                    InventoryStock::where('warehouse_id', $record->warehouse_id)
+                                        ->with(['item.category'])
+                                )
+                                ->withFilename("Form_SO_{$record->warehouse->name}_" . date('Y-m-d'))
+                                ->withColumns([
+                                    Column::make('item.category.name')->heading('Kategori'),
+                                    Column::make('item.name')->heading('Nama Barang'),
+                                    Column::make('rack_location')->heading('Lokasi Rak'),
+                                    // MENTOR TIP: Kosongkan kolom qty fisik biar mereka hitung beneran!
+                                    Column::make('qty_fisik')->heading('Jumlah Fisik (Isi Manual)')->formatStateUsing(fn() => ''),
+                                    Column::make('note')->heading('Catatan Lapangan')->formatStateUsing(fn() => ''),
+                                ]),
+                        ])->execute();
+                    }),
             ]);
     }
 
