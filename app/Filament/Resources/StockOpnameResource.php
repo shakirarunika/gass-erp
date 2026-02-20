@@ -19,6 +19,7 @@ use pxlrbt\FilamentExcel\Actions\Tables\ExportAction;
 use pxlrbt\FilamentExcel\Exports\ExcelExport;
 use pxlrbt\FilamentExcel\Columns\Column;
 
+
 class StockOpnameResource extends Resource
 {
     protected static ?string $model = StockOpname::class;
@@ -138,34 +139,55 @@ class StockOpnameResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('opname_date')->date('d M Y')->sortable(),
+                Tables\Columns\TextColumn::make('code')
+                    ->label('No. SO')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('opname_date')
+                    ->label('Tanggal')
+                    ->date('d M Y')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('warehouse.name')->label('Gudang'),
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
                     ->color(fn(string $state) => $state === 'DRAFT' ? 'warning' : 'success'),
-
-                // Perbaikan 500: Gunakan state() jika kolom tidak ada di DB
-                Tables\Columns\TextColumn::make('total_items')
-                    ->label('Total Item')
-                    ->state(fn(StockOpname $record) => $record->details()->count()),
-
                 Tables\Columns\TextColumn::make('accuracy')
-                    ->label('Akurasi Audit')
+                    ->label('Akurasi')
                     ->state(fn(StockOpname $record): string => $record->accuracy . '%')
-                    ->badge()
-                    ->color(fn($state) => match (true) {
-                        (float) $state >= 95 => 'success', // Hijau kalau sangat akurat
-                        (float) $state >= 80 => 'warning', // Kuning kalau ada selisih dikit
-                        default => 'danger',               // Merah kalau gudang lo berantakan
-                    }),
+                    ->badge(),
             ])
-            ->filters([
-                Tables\Filters\SelectFilter::make('status')
-                    ->options(['DRAFT' => 'Draft', 'PROCESSED' => 'Processed']),
+            ->headerActions([
+                // 👇 TOMBOL DOWNLOAD DI HEADER
+                ExportAction::make('download_so_template')
+                    ->label('Download Form SO')
+                    ->icon('heroicon-o-document-arrow-down')
+                    ->color('success')
+                    // Munculin modal buat pilih gudang mana yang mau ditarik stoknya
+                    ->form([
+                        Forms\Components\Select::make('warehouse_id')
+                            ->label('Pilih Gudang untuk SO')
+                            ->relationship('warehouse', 'name')
+                            ->required()
+                            ->searchable()
+                            ->preload(),
+                    ])
+                    ->exports([
+                        ExcelExport::make()
+                            ->fromModel(InventoryStock::class)
+                            ->withFilename('Form_SO_LOKASI_' . date('Y-m-d'))
+                            ->withColumns([
+                                Column::make('warehouse.name')->heading('Gudang'),
+                                Column::make('item.category.name')->heading('Kategori'),
+                                Column::make('item.name')->heading('Nama Barang'),
+                                Column::make('quantity')->heading('Stok Sistem'),
+                                // Kolom kosong buat coret-coret petugas
+                                Column::make('qty_fisik')->heading('Stok Fisik (Isi Manual)')->formatStateUsing(fn() => ''),
+                                Column::make('notes')->heading('Keterangan')->formatStateUsing(fn() => ''),
+                            ]),
+                    ]),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
-                // ... Aksi Download Excel lo yang lama sudah OK
             ]);
     }
 
