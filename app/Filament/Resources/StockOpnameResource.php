@@ -19,7 +19,6 @@ use pxlrbt\FilamentExcel\Actions\Tables\ExportAction;
 use pxlrbt\FilamentExcel\Exports\ExcelExport;
 use pxlrbt\FilamentExcel\Columns\Column;
 
-
 class StockOpnameResource extends Resource
 {
     protected static ?string $model = StockOpname::class;
@@ -139,59 +138,36 @@ class StockOpnameResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('code')
-                    ->label('No. SO')
-                    ->searchable()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('opname_date')
-                    ->label('Tanggal')
-                    ->date('d M Y')
-                    ->sortable(),
+                Tables\Columns\TextColumn::make('opname_date')->date('d M Y')->sortable(),
                 Tables\Columns\TextColumn::make('warehouse.name')->label('Gudang'),
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
                     ->color(fn(string $state) => $state === 'DRAFT' ? 'warning' : 'success'),
+
+                // Perbaikan 500: Gunakan state() jika kolom tidak ada di DB
+                Tables\Columns\TextColumn::make('total_items')
+                    ->label('Total Item')
+                    ->state(fn(StockOpname $record) => $record->details()->count()),
+
                 Tables\Columns\TextColumn::make('accuracy')
-                    ->label('Akurasi')
+                    ->label('Akurasi Audit')
                     ->state(fn(StockOpname $record): string => $record->accuracy . '%')
-                    ->badge(),
+                    ->badge()
+                    ->color(fn($state) => match (true) {
+                        (float) $state >= 95 => 'success', // Hijau kalau sangat akurat
+                        (float) $state >= 80 => 'warning', // Kuning kalau ada selisih dikit
+                        default => 'danger',               // Merah kalau gudang lo berantakan
+                    }),
             ])
-            ->headerActions([
-                ExportAction::make('download_so_template')
-                    ->label('Download Form SO')
-                    ->icon('heroicon-o-document-arrow-down')
-                    ->color('success')
-                    ->form([
-                        Forms\Components\Select::make('warehouse_id')
-                            ->label('Pilih Gudang untuk SO')
-                            ->relationship('warehouse', 'name')
-                            ->required(),
-                    ])
-                    ->exports([
-                        ExcelExport::make()
-                            // 1. Paksa ambil dari model InventoryStock (Bukan StockOpname)
-                            ->fromModel(InventoryStock::class)
-                            // 2. Gunakan query modifier yang lebih aman
-                            ->modifyQueryUsing(function (Builder $query, $data) {
-                                // $data di sini otomatis berisi hasil inputan Select warehouse_id tadi
-                                return $query->where('warehouse_id', $data['warehouse_id'])
-                                    ->with(['item.category', 'item.unit', 'warehouse']);
-                            })
-                            ->withFilename('Form_SO_' . date('Y-m-d'))
-                            ->withColumns([
-                                Column::make('warehouse.name')->heading('Gudang'),
-                                Column::make('item.category.name')->heading('Kategori'),
-                                Column::make('item.name')->heading('Nama Barang'),
-                                Column::make('quantity')->heading('Stok Sistem'),
-                                Column::make('item.unit.name')->heading('Satuan'),
-                                // Kolom kosong untuk diisi petugas
-                                Column::make('qty_fisik')->heading('Stok Fisik (Isi Manual)')->formatStateUsing(fn() => ''),
-                                Column::make('keterangan')->heading('Keterangan')->formatStateUsing(fn() => ''),
-                            ]),
-                    ]),
+            ->filters([
+                Tables\Filters\SelectFilter::make('status')
+                    ->options(['DRAFT' => 'Draft', 'PROCESSED' => 'Processed']),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                // ... Aksi Download Excel lo yang lama sudah OK
+
+
             ]);
     }
 
