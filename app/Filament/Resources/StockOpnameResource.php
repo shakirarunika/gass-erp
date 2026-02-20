@@ -157,12 +157,11 @@ class StockOpnameResource extends Resource
                     ->badge(),
             ])
             ->headerActions([
-                // 👇 TOMBOL DOWNLOAD DI HEADER
                 ExportAction::make('download_so_template')
                     ->label('Download Form SO')
                     ->icon('heroicon-o-document-arrow-down')
                     ->color('success')
-                    // Munculin modal buat pilih gudang mana yang mau ditarik stoknya
+                    // Popup modal buat pilih gudang mana yang mau di-opname
                     ->form([
                         Forms\Components\Select::make('warehouse_id')
                             ->label('Pilih Gudang untuk SO')
@@ -173,16 +172,25 @@ class StockOpnameResource extends Resource
                     ])
                     ->exports([
                         ExcelExport::make()
-                            ->fromModel(InventoryStock::class)
-                            ->withFilename('Form_SO_LOKASI_' . date('Y-m-d'))
+                            // 👇 PENTING: Paksa export ini ambil data dari Model InventoryStock, bukan StockOpname
+                            ->fromModel(\App\Models\InventoryStock::class)
+                            // 👇 Filter datanya sesuai gudang yang dipilih di modal tadi
+                            ->modifyQueryUsing(
+                                fn($query, $data) =>
+                                $query->where('warehouse_id', $data['warehouse_id'])
+                                    ->with(['item.category', 'item.unit', 'warehouse'])
+                            )
+                            ->withFilename('Form_SO_' . date('Y-m-d'))
+                            // 👇 Mapping kolom supaya isinya Nama Barang, Kategori, dll.
                             ->withColumns([
-                                Column::make('warehouse.name')->heading('Gudang'),
                                 Column::make('item.category.name')->heading('Kategori'),
+                                Column::make('item.code')->heading('Kode Barang'),
                                 Column::make('item.name')->heading('Nama Barang'),
                                 Column::make('quantity')->heading('Stok Sistem'),
-                                // Kolom kosong buat coret-coret petugas
+                                Column::make('item.unit.name')->heading('Satuan'),
+                                // Kolom kosong untuk coret-coret petugas
                                 Column::make('qty_fisik')->heading('Stok Fisik (Isi Manual)')->formatStateUsing(fn() => ''),
-                                Column::make('notes')->heading('Keterangan')->formatStateUsing(fn() => ''),
+                                Column::make('keterangan')->heading('Keterangan')->formatStateUsing(fn() => ''),
                             ]),
                     ]),
             ])
