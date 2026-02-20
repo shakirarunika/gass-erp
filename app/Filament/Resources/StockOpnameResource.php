@@ -166,33 +166,6 @@ class StockOpnameResource extends Resource
             ->actions([
                 Tables\Actions\EditAction::make(),
                 // ... Aksi Download Excel lo yang lama sudah OK
-
-                // TOMBOL SAKTI LU DISINI
-                Tables\Actions\Action::make('download_form')
-                    ->label('Download Form')
-                    ->icon('heroicon-o-document-arrow-down')
-                    ->color('info')
-                    ->action(function ($record) {
-                        // 👇 Gunakan ::make('nama_bebas') dan pastikan terpanggil dengan benar
-                        return \pxlrbt\FilamentExcel\Actions\Tables\ExportAction::make('download_so')
-                            ->exports([
-                                ExcelExport::make()
-                                    ->fromQuery(
-                                        // 👇 Gunakan closure fn() agar query dieksekusi saat tombol diklik
-                                        fn() => \App\Models\InventoryStock::where('warehouse_id', $record->warehouse_id)
-                                            ->with(['item.category'])
-                                    )
-                                    ->withFilename("Form_SO_{$record->warehouse->name}_" . date('Y-m-d'))
-                                    ->withColumns([
-                                        \pxlrbt\FilamentExcel\Columns\Column::make('item.category.name')->heading('Kategori'),
-                                        \pxlrbt\FilamentExcel\Columns\Column::make('item.name')->heading('Nama Barang'),
-                                        \pxlrbt\FilamentExcel\Columns\Column::make('rack_location')->heading('Lokasi Rak'),
-                                        \pxlrbt\FilamentExcel\Columns\Column::make('qty_fisik')->heading('Jumlah Fisik')->formatStateUsing(fn() => ''),
-                                        \pxlrbt\FilamentExcel\Columns\Column::make('note')->heading('Catatan')->formatStateUsing(fn() => ''),
-                                    ]),
-                            ])
-                            ->execute(); // Jalankan proses download-nya
-                    }),
             ]);
     }
 
