@@ -15,6 +15,9 @@ use Filament\Forms\Get;
 use Filament\Forms\Set;
 use Illuminate\Support\HtmlString;
 use Illuminate\Database\Eloquent\Builder;
+use pxlrbt\FilamentExcel\Actions\Tables\ExportAction;
+use pxlrbt\FilamentExcel\Exports\ExcelExport;
+use pxlrbt\FilamentExcel\Columns\Column;
 
 class StockOpnameResource extends Resource
 {
@@ -56,7 +59,7 @@ class StockOpnameResource extends Resource
                                 $dataRepeater = $stokGudang->map(fn($stock) => [
                                     'item_id'      => $stock->item_id,
                                     'system_qty'   => $stock->quantity,
-                                    'physical_qty' => $stock->quantity,
+                                    'physical_qty' => 0,
                                     'description'  => null,
                                 ])->toArray();
 
@@ -160,6 +163,9 @@ class StockOpnameResource extends Resource
                 Tables\Filters\SelectFilter::make('status')
                     ->options(['DRAFT' => 'Draft', 'PROCESSED' => 'Processed']),
             ])
+
+            ->headerActions([])
+
             ->actions([
                 Tables\Actions\EditAction::make(),
                 // ... Aksi Download Excel lo yang lama sudah OK

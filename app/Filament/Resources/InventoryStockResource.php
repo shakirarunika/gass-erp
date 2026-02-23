@@ -12,6 +12,9 @@ use Filament\Tables\Table;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\Filter;
 use Illuminate\Database\Eloquent\Builder;
+use pxlrbt\FilamentExcel\Actions\Tables\ExportAction;
+use pxlrbt\FilamentExcel\Exports\ExcelExport;
+use pxlrbt\FilamentExcel\Columns\Column;
 
 class InventoryStockResource extends Resource
 {
@@ -76,7 +79,7 @@ class InventoryStockResource extends Resource
         return $table
             ->striped()
             // 👇 OPTIMASI: Eager Load relasi biar loading cepat (Anti Lemot)
-            ->modifyQueryUsing(fn(Builder $query) => $query->with(['item.unit', 'warehouse']))
+            ->modifyQueryUsing(fn(Builder $query) => $query->with(['item.unit', 'warehouse', 'item.category'])) // Tambahin item.category di sini
             ->columns([
                 Tables\Columns\TextColumn::make('warehouse.name')
                     ->label('Gudang')
@@ -127,6 +130,36 @@ class InventoryStockResource extends Resource
                         fn(Builder $query) =>
                         $query->whereRaw('quantity <= (SELECT min_stock FROM items WHERE items.id = inventory_stocks.item_id)')
                     ),
+            ])
+            ->headerActions([
+                ExportAction::make()
+                    ->label('Download Form SO')
+                    ->color('success')
+                    ->icon('heroicon-o-document-arrow-down')
+                    ->exports([
+                        ExcelExport::make()
+                            ->fromTable()
+                            ->withFilename('Form-SO-Gudang-' . date('d-M-Y'))
+                            ->withColumns([
+                                Column::make('warehouse.name')->heading('Gudang'),
+                                Column::make('item.category.name')->heading('Kategori'), // Asumsi relasi category ada di model Item
+                                Column::make('item.name')->heading('Nama Barang'),
+                                Column::make('rack_location')->heading('Lokasi Rak'),
+                                Column::make('item.unit.name')->heading('Satuan'),
+
+                                // 👇 Ini kolom "Sisa Stok" yang lo tanya tadi
+                                Column::make('quantity')->heading('Qty Sistem'),
+
+                                // 👇 Kolom kosong buat petugas nulis manual pas keliling gudang
+                                Column::make('qty_fisik')
+                                    ->heading('Qty Fisik (Hitung Manual)')
+                                    ->formatStateUsing(fn() => ''), // Dikosongkan sengaja
+
+                                Column::make('selisih')
+                                    ->heading('Selisih')
+                                    ->formatStateUsing(fn() => ''), // Dikosongkan
+                            ])
+                    ]),
             ])
             ->actions([
                 Tables\Actions\EditAction::make()
