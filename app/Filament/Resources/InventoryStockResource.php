@@ -133,32 +133,30 @@ class InventoryStockResource extends Resource
             ])
             ->headerActions([
                 ExportAction::make()
-                    ->label('Download Form SO')
+                    ->label('Download Data Stok')
                     ->color('success')
                     ->icon('heroicon-o-document-arrow-down')
                     ->exports([
-                        ExcelExport::make()
+                        // OPSI 1: Download sesuai filter yang lagi aktif di layar
+                        ExcelExport::make('filtered')
+                            ->label('Sesuai Filter Layar')
                             ->fromTable()
-                            ->withFilename('Form-SO-Gudang-' . date('d-M-Y'))
+                            ->withFilename('Stok-Terfilter-' . date('d-M-Y')),
+
+                        // OPSI 2: Download SEMUA barang di tabel InventoryStock (Tanpa peduli filter)
+                        ExcelExport::make('all')
+                            ->label('Semua Barang (Full Dump)')
+                            ->fromModel() // <--- Ini kuncinya, dia narik langsung dari Model, bukan dari Table state
+                            ->withFilename('Full-Inventory-Dump-' . date('d-M-Y'))
                             ->withColumns([
                                 Column::make('warehouse.name')->heading('Gudang'),
-                                Column::make('item.category.name')->heading('Kategori'), // Asumsi relasi category ada di model Item
+                                Column::make('item.category.name')->heading('Kategori'),
                                 Column::make('item.name')->heading('Nama Barang'),
                                 Column::make('rack_location')->heading('Lokasi Rak'),
                                 Column::make('item.unit.name')->heading('Satuan'),
-
-                                // 👇 Ini kolom "Sisa Stok" yang lo tanya tadi
                                 Column::make('quantity')->heading('Qty Sistem'),
-
-                                // 👇 Kolom kosong buat petugas nulis manual pas keliling gudang
-                                Column::make('qty_fisik')
-                                    ->heading('Qty Fisik (Hitung Manual)')
-                                    ->formatStateUsing(fn() => ''), // Dikosongkan sengaja
-
-                                Column::make('selisih')
-                                    ->heading('Selisih')
-                                    ->formatStateUsing(fn() => ''), // Dikosongkan
-                            ])
+                                Column::make('qty_fisik')->heading('Qty Fisik (Isi Manual)')->formatStateUsing(fn() => ''),
+                            ]),
                     ]),
             ])
             ->actions([
