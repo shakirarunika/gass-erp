@@ -28,6 +28,7 @@ use App\Filament\Widgets\WarehouseValueOverview;
 use App\Filament\Widgets\CategoryValueChart;
 use App\Filament\Widgets\RecentActivityWidget;
 use App\Filament\Widgets\WarehouseValuationTable;
+use App\Filament\Widgets\StockOpnameTrendChart;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -67,7 +68,7 @@ class AdminPanelProvider extends PanelProvider
                 LatestLowStockItems::class,
                 //RecentActivityWidget::class,
                 WarehouseValuationTable::class,
-
+                StockOpnameTrendChart::class,
                 //LatestTransactions::class,
                 //Widgets\AccountWidget::class,
                 //Widgets\FilamentInfoWidget::class,

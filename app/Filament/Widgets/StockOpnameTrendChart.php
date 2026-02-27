@@ -20,7 +20,7 @@ class StockOpnameTrendChart extends ChartWidget
                 SUM(physical_qty * cost_at_opname) as total_valuation,
                 (SUM(CASE WHEN physical_qty = system_qty THEN 1 ELSE 0 END) / COUNT(*)) * 100 as accuracy
             ")
-            ->where('stock_opnames.status', 'completed')
+            ->where('stock_opnames.status', 'PROCESSED')
             ->groupBy('month')
             ->orderBy('stock_opnames.opname_date')
             ->get();
