@@ -24,4 +24,14 @@ class StockOpnameDetail extends Model
     {
         return $this->belongsTo(StockOpname::class);
     }
+
+    protected static function booted()
+    {
+        static::creating(function ($model) {
+            // Saat baris SO dibuat, ambil avg_cost dari master item
+            if ($model->item_id) {
+                $model->cost_at_opname = $model->item->avg_cost ?? 0;
+            }
+        });
+    }
 }
