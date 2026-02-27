@@ -12,18 +12,26 @@ class StockOpnameTrendChart extends ChartWidget
 
     protected function getData(): array
     {
-        // Ambil data SO yang statusnya 'processed' (Sesuaikan kalau status lu beda namanya)
-        $data = StockOpnameDetail::query()
+        $data = \App\Models\StockOpnameDetail::query()
             ->join('stock_opnames', 'stock_opnames.id', '=', 'stock_opname_details.stock_opname_id')
             ->selectRaw("
-                DATE_FORMAT(stock_opnames.opname_date, '%b %Y') as month,
-                SUM(physical_qty * cost_at_opname) as total_valuation,
-                (SUM(CASE WHEN physical_qty = system_qty THEN 1 ELSE 0 END) / COUNT(*)) * 100 as accuracy
-            ")
+            DATE_FORMAT(stock_opnames.opname_date, '%b %Y') as month,
+            DATE_FORMAT(stock_opnames.opname_date, '%Y-%m') as sort_key, -- Buat pengurutan
+            SUM(physical_qty * cost_at_opname) as total_valuation,
+            (SUM(CASE WHEN physical_qty = system_qty THEN 1 ELSE 0 END) / COUNT(*)) * 100 as accuracy
+        ")
+            // Pastikan 'PROCESSED' pake tanda petik di kodingan lu
             ->where('stock_opnames.status', 'PROCESSED')
-            ->groupBy('month')
-            ->orderBy('stock_opnames.opname_date')
+            ->groupBy('month', 'sort_key') // sort_key WAJIB masuk sini biar gak error
+            ->orderBy('sort_key', 'asc') // Urutkan berdasarkan YYYY-MM biar gak ngacak
             ->get();
+
+        if ($data->isEmpty()) {
+            return [
+                'datasets' => [],
+                'labels' => [],
+            ];
+        }
 
         return [
             'datasets' => [
