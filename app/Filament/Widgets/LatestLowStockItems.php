@@ -13,7 +13,7 @@ class LatestLowStockItems extends BaseWidget
     protected int | string | array $columnSpan = 'full';
 
     // Beri judul yang tegas
-    protected static ?string $heading = 'DAFTAR STOK KRITIS (ORDER SEGERA!)';
+    protected static ?string $heading = 'DAFTAR BARANG DIBAWAH MINIMAL STOK';
 
     public function table(Table $table): Table
     {
@@ -37,9 +37,13 @@ class LatestLowStockItems extends BaseWidget
 
                 Tables\Columns\TextColumn::make('stocks_sum_quantity')
                     ->label('Stok Saat Ini')
-                    ->sum('stocks', 'quantity') // Otomatis hitung total qty
+                    ->sum('stocks', 'quantity')
+                    ->default(0)
                     ->badge()
-                    ->color('danger'),
+                    ->color(
+                        fn($state, Item $record): string =>
+                        $state <= 0 ? 'danger' : ($state <= $record->min_stock ? 'warning' : 'success')
+                    ),
 
                 Tables\Columns\TextColumn::make('min_stock')
                     ->label('Batas Aman')
