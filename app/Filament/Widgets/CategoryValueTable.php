@@ -11,8 +11,6 @@ use Filament\Widgets\TableWidget as BaseWidget;
 class CategoryValueTable extends BaseWidget
 {
     protected static ?string $heading = 'Komposisi Nilai Aset Per Kategori';
-
-    // Pastikan bagi dua sama chart
     protected int | string | array $columnSpan = 1;
 
     public function table(Table $table): Table
@@ -31,12 +29,12 @@ class CategoryValueTable extends BaseWidget
                     ->orderByDesc('total_val')
             )
             ->columns([
-                // 2. INDIKATOR WARNA (Matching dengan Chart)
+                // 2. INDIKATOR WARNA
                 Tables\Columns\TextColumn::make('id')
                     ->label('')
                     ->formatStateUsing(fn() => ' ')
                     ->extraAttributes(fn($record) => [
-                        'style' => 'background-color: ' . $this->getCategoryColor($record->id) . '; width: 10px; border-radius: 99px;',
+                        'style' => 'background-color: ' . $this->getCategoryColor($record->id) . '; width: 12px; border-radius: 99px; margin-right: 10px;',
                     ]),
 
                 Tables\Columns\TextColumn::make('name')
@@ -60,11 +58,11 @@ class CategoryValueTable extends BaseWidget
             ->paginated(false);
     }
 
-    // 1. TINGGI WIDGET SAMA RATA (Gue pindahin ke fungsi CSS aman)
+    // 1. TINGGI WIDGET (Cara paling aman di v3)
     protected function getTableAttributes(): array
     {
         return [
-            'style' => 'max-height: 380px; overflow-y: auto;',
+            'style' => 'height: 400px; overflow-y: auto;',
         ];
     }
 
