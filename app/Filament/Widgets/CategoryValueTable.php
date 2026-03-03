@@ -7,19 +7,19 @@ use App\Models\InventoryStock;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
-use Illuminate\Support\Facades\DB;
 
 class CategoryValueTable extends BaseWidget
 {
     protected static ?string $heading = 'Komposisi Nilai Aset Per Kategori';
 
+    // Pastikan bagi dua sama chart
     protected int | string | array $columnSpan = 1;
 
     public function table(Table $table): Table
     {
         return $table
             ->query(
-                // 3. SORT OTOMATIS BERDASARKAN VALUE TERBANYAK
+                // 3. OTOMATIS SORT DARI VALUE TERBANYAK
                 Category::query()
                     ->select('categories.*')
                     ->addSelect([
@@ -32,9 +32,9 @@ class CategoryValueTable extends BaseWidget
             )
             ->columns([
                 // 2. INDIKATOR WARNA (Matching dengan Chart)
-                Tables\Columns\TextColumn::make('color')
+                Tables\Columns\TextColumn::make('id')
                     ->label('')
-                    ->getStateUsing(fn() => ' ')
+                    ->formatStateUsing(fn() => ' ')
                     ->extraAttributes(fn($record) => [
                         'style' => 'background-color: ' . $this->getCategoryColor($record->id) . '; width: 10px; border-radius: 99px;',
                     ]),
@@ -57,12 +57,15 @@ class CategoryValueTable extends BaseWidget
                     ->weight('bold')
                     ->alignEnd(),
             ])
-            ->paginated(false)
-            // 1. TINGGI WIDGET SAMA RATA (Ganti extraTableAttributes jadi extraAttributes)
-            ->extraAttributes([
-                'class' => 'overflow-y-auto',
-                'style' => 'max-height: 400px;',
-            ]);
+            ->paginated(false);
+    }
+
+    // 1. TINGGI WIDGET SAMA RATA (Gue pindahin ke fungsi CSS aman)
+    protected function getTableAttributes(): array
+    {
+        return [
+            'style' => 'max-height: 380px; overflow-y: auto;',
+        ];
     }
 
     private function getCategoryColor($id): string
