@@ -2,60 +2,47 @@
 
 namespace App\Filament\Widgets;
 
-use App\Models\Category;
-use App\Models\Item;
 use Filament\Widgets\ChartWidget;
+use Filament\Support\RawJs; // --- IMPORT INI WAJIB ---
+use Filament\View\PanelsRenderHook;
+use Illuminate\Support\Facades\Blade;
+use Filament\Support\HtmlString;
 
 class CategoryValueChart extends ChartWidget
 {
     protected static ?string $heading = 'Komposisi Nilai Aset Per Kategori';
 
-    // Atur ukuran agar proporsional di dashboard
+    // Atur sort agar widget ini di posisi yang benar
+    protected static ?int $sort = 2;
+
+    // Atur agar grafik memanjang
     protected int | string | array $columnSpan = 1;
 
-
+    // --- STEP 1: BERSIHKAN LABEL ---
     protected function getData(): array
     {
-        // 1. Ambil semua kategori yang punya barang
-        $categories = Category::with('items.stocks')->get();
-
-        $labels = [];
-        $values = [];
-
-        foreach ($categories as $category) {
-            // 2. Hitung total valuasi per kategori
-            $categoryValuation = $category->items->sum(function ($item) {
-                $totalQty = $item->stocks->sum('quantity');
-                return $totalQty * $item->avg_cost;
+        $data = \App\Models\Category::with(['items.stocks'])
+            ->get()
+            ->map(function ($category) {
+                $value = $category->items->sum(function ($item) {
+                    return $item->stocks->sum('quantity') * $item->avg_cost;
+                });
+                return [
+                    'name' => $category->name,
+                    'value' => (float) $value
+                ];
             });
-
-            if ($categoryValuation > 0) {
-                $labels[] = sprintf(
-                    '%s (%s)',
-                    $category->name,
-                    $this->formatRupiahCompact($categoryValuation)
-                );
-                $values[] = $categoryValuation;
-            }
-        }
 
         return [
             'datasets' => [
                 [
-                    'label' => 'Total Nilai (IDR)',
-                    'data' => $values,
-                    // Warna formal: Slate, Emerald, Amber, Rose, Indigo
-                    'backgroundColor' => [
-                        '#64748b',
-                        '#10b981',
-                        '#f59e0b',
-                        '#f43f5e',
-                        '#6366f1',
-                        '#8b5cf6'
-                    ],
+                    'label' => 'Nilai Aset',
+                    'data' => $data->pluck('value')->toArray(),
+                    'backgroundColor' => '#36A2EB', // Kasih satu warna biar gak berantakan
                 ],
             ],
-            'labels' => $labels,
+            // --- INI KUNCINYA: Cuma kirim nama kategori saja ---
+            'labels' => $data->pluck('name')->toArray(),
         ];
     }
 
@@ -64,12 +51,15 @@ class CategoryValueChart extends ChartWidget
         return 'bar';
     }
 
+    // --- STEP 2: AKTIFKAN DATALABELS ---
     protected function getOptions(): array
     {
         return [
-            'indexAxis' => 'y', // Tetap horizontal
+            'indexAxis' => 'y', // Biar tetap horizontal
             'plugins' => [
                 'legend' => ['display' => false], // Hapus legend biar luas
+                'tooltip' => ['enabled' => false], // Matikan hover
+
                 // --- INI KONFIGURASI DATALABELS ---
                 'datalabels' => [
                     'anchor' => 'end', // Taruh di ujung batang
@@ -80,14 +70,14 @@ class CategoryValueChart extends ChartWidget
                         'size' => 12,
                     ],
                     // Fungsi buat format angka jadi "Rp 55.9 Jt"
-                    'formatter' => \Filament\Support\RawJs::make(<<<JS
-                    function(value) {
-                        if (value === null || value === 0) return '';
-                        if (value >= 1000000) return 'Rp ' + (value / 1000000).toFixed(1) + ' Jt';
-                        if (value >= 1000) return 'Rp ' + (value / 1000).toFixed(0) + ' Rb';
-                        return 'Rp ' + value.toLocaleString('id-ID');
-                    }
-                JS),
+                    'formatter' => RawJs::make(<<<JS
+                        function(value) {
+                            if (value === null || value === 0) return '';
+                            if (value >= 1000000) return 'Rp ' + (value / 1000000).toFixed(1) + ' Jt';
+                            if (value >= 1000) return 'Rp ' + (value / 1000).toFixed(0) + ' Rb';
+                            return 'Rp ' + value.toLocaleString('id-ID');
+                        }
+                    JS),
                 ],
             ],
             'scales' => [
@@ -99,6 +89,12 @@ class CategoryValueChart extends ChartWidget
                     'grid' => ['display' => false], // Hapus garis vertikal
                     'ticks' => [
                         'font' => ['weight' => 'bold', 'size' => 13],
+                        // Pastikan sumbu Y bersih dari teks rupiah
+                        'callback' => RawJs::make(<<<JS
+                            function(value) {
+                                return value;
+                            }
+                        JS),
                     ],
                 ],
             ],
@@ -109,24 +105,5 @@ class CategoryValueChart extends ChartWidget
                 ],
             ],
         ];
-    }
-
-    private function formatRupiahCompact(float $value): string
-    {
-        $absValue = abs($value);
-
-        if ($absValue >= 1_000_000_000) {
-            return 'Rp' . number_format($value / 1_000_000_000, 1, ',', '.') . ' M';
-        }
-
-        if ($absValue >= 1_000_000) {
-            return 'Rp' . number_format($value / 1_000_000, 1, ',', '.') . ' Jt';
-        }
-
-        if ($absValue >= 1_000) {
-            return 'Rp' . number_format($value / 1_000, 1, ',', '.') . ' Rb';
-        }
-
-        return 'Rp' . number_format($value, 0, ',', '.');
     }
 }
