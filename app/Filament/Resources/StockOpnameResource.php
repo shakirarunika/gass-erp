@@ -54,15 +54,22 @@ class StockOpnameResource extends Resource
                                     return;
                                 }
 
-                                // Ambil stok dari gudang terpilih
-                                $stokGudang = InventoryStock::where('warehouse_id', $state)->get();
+                                // AMBIL SEMUA BARANG (448 barang)
+                                $allItems = \App\Models\Item::all();
 
-                                $dataRepeater = $stokGudang->map(fn($stock) => [
-                                    'item_id'      => $stock->item_id,
-                                    'system_qty'   => $stock->quantity,
-                                    'physical_qty' => 0,
-                                    'description'  => null,
-                                ])->toArray();
+                                $dataRepeater = $allItems->map(function ($item) use ($state) {
+                                    // Cari stok barang ini di gudang terpilih
+                                    $stock = \App\Models\InventoryStock::where('item_id', $item->id)
+                                        ->where('warehouse_id', $state)
+                                        ->first();
+
+                                    return [
+                                        'item_id'      => $item->id,
+                                        'system_qty'   => $stock ? $stock->quantity : 0, // Kalau gak ada di gudang, isi 0
+                                        'physical_qty' => 0,
+                                        'description'  => null,
+                                    ];
+                                })->toArray();
 
                                 $set('details', $dataRepeater);
                             })
