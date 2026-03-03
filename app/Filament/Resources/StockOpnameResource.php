@@ -140,27 +140,43 @@ class StockOpnameResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('opname_date')->date('d M Y')->sortable(),
-                Tables\Columns\TextColumn::make('warehouse.name')->label('Gudang'),
+                Tables\Columns\TextColumn::make('opname_date')
+                    ->label('Tanggal Audit')
+                    ->date('d M Y')
+                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('warehouse.name')
+                    ->label('Gudang'),
+
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
                     ->color(fn(string $state) => $state === 'DRAFT' ? 'warning' : 'success'),
 
-                // Perbaikan 500: Gunakan state() jika kolom tidak ada di DB
-                Tables\Columns\TextColumn::make('total_items')
-                    ->label('Total Item')
-                    ->state(fn(StockOpname $record) => $record->details()->count()),
+                // 1. Ganti Total Item jadi Total Valuasi (Rupiah)
+                Tables\Columns\TextColumn::make('total_valuation')
+                    ->label('Nilai Aset')
+                    ->money('IDR')
+                    ->state(fn(StockOpname $record) => $record->details()->sum(\DB::raw('physical_qty * cost_at_opname')))
+                    ->color('gray'),
 
+                // 2. Akurasi dengan deskripsi (tetap dipertahankan karena sudah informatif)
                 Tables\Columns\TextColumn::make('accuracy')
                     ->label('Akurasi')
-                    ->suffix('%')
+                    ->state(fn(StockOpname $record): string => $record->accuracy . '%')
                     ->badge()
                     ->color(fn($state) => match (true) {
-                        $state >= 99 => 'success',
-                        $state >= 95 => 'warning',
+                        (float) $state >= 99 => 'success',
+                        (float) $state >= 95 => 'warning',
                         default => 'danger',
                     })
-                    ->description(fn(StockOpname $record) => "Total: " . $record->details()->count() . " Item"),
+                    ->description(fn(StockOpname $record) => "Audited: " . $record->details()->count() . " Items"),
+
+                // 3. Tambahkan info "Item Selisih" biar lebih Actionable
+                Tables\Columns\TextColumn::make('variance_count')
+                    ->label('Item Selisih')
+                    ->state(fn(StockOpname $record) => $record->details()->whereRaw('physical_qty != system_qty')->count() . " Barang")
+                    ->icon('heroicon-o-exclamation-triangle')
+                    ->color(fn($state) => (int)$state > 0 ? 'danger' : 'gray'),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
