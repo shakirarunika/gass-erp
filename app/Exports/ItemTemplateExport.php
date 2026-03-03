@@ -17,7 +17,7 @@ class ItemTemplateExport implements FromCollection, WithHeadings, ShouldAutoSize
                 'Pulpen Standard', // nama_barang
                 '',                // kode_barang (KOSONGIN BIAR AUTO)
                 'Alat Tulis',      // kategori
-                'Pices',           // satuan
+                'Pieces',           // satuan
                 '10',              // min_stock
                 '2500'             // harga_modal
             ],

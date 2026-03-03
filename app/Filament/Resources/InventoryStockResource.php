@@ -154,28 +154,21 @@ class InventoryStockResource extends Resource
                     ),
             ])
             ->headerActions([
-                ExportAction::make()
+                Tables\Actions\Action::make('exportExcel')
                     ->label('Download Data Stok')
-                    ->color('success')
                     ->icon('heroicon-o-document-arrow-down')
-                    ->exports([
-                        ExcelExport::make('all')
-                            ->label('Download Full (Excel)')
-                            ->fromModel()
-                            ->withFilename('Inventory-Report-' . date('d-M-Y'))
-                            ->withColumns([
-                                Column::make('warehouse.name')->heading('Gudang'),
-                                Column::make('item.category.name')->heading('Kategori'),
-                                Column::make('item.code')->heading('Kode Barang'),
-                                Column::make('item.name')->heading('Nama Barang'),
-                                Column::make('rack_location')->heading('Lokasi Rak'),
-                                Column::make('quantity')->heading('Qty Sistem'),
-                                Column::make('item.unit.name')->heading('Satuan'),
-                                // Nilai Aset di Excel
-                                Column::make('total_value')->heading('Total Valuasi (IDR)')
-                                    ->formatStateUsing(fn($record) => $record->quantity * ($record->item->avg_cost ?? 0)),
-                            ]),
-                    ]),
+                    ->color('success')
+                    ->action(function (Tables\Actions\Action $action) {
+                        // Ambil query yang lagi aktif (termasuk filter di layar)
+                        $query = InventoryStock::query()
+                            ->with(['item.unit', 'warehouse', 'item.category']);
+
+                        // Download pake class yang kita buat tadi
+                        return \Maatwebsite\Excel\Facades\Excel::download(
+                            new \App\Exports\InventoryReportExport($query),
+                            'Stok-Realtime-' . date('Y-m-d') . '.xlsx'
+                        );
+                    }),
             ])
             ->actions([
                 Tables\Actions\EditAction::make()
