@@ -25,6 +25,7 @@ use Illuminate\Support\HtmlString;
 use App\Filament\Widgets\StatsOverview;
 use App\Filament\Widgets\StockOpnameTrendChart;
 use App\Filament\Widgets\CategoryValueChart;
+use App\Filament\Widgets\CategoryValueTable;
 use App\Filament\Widgets\LatestLowStockItems;
 use App\Filament\Widgets\DeadStockItems;
 
@@ -52,7 +53,7 @@ class AdminPanelProvider extends PanelProvider
             ->widgets([
                 StatsOverview::class,
                 StockOpnameTrendChart::class,
-                CategoryValueChart::class,
+                CategoryValueTable::class,
                 LatestLowStockItems::class,
                 DeadStockItems::class,
             ])
