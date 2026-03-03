@@ -4,15 +4,14 @@ namespace App\Filament\Widgets;
 
 use App\Models\StockOpnameDetail;
 use Filament\Widgets\ChartWidget;
-use Illuminate\Support\Facades\DB;
 
 class StockOpnameTrendChart extends ChartWidget
 {
     protected static ?string $heading = 'Trend Akurasi & Valuasi SO';
     protected int | string | array $columnSpan = 1;
 
-    // 1. TETAP KUNCI TINGGI (Ini Aman karena CSS Biasa)
-    protected static ?string $maxHeight = '400px';
+    // 1. SET TINGGI DI LEVEL CLASS (UKURAN TARGET)
+    protected static ?string $maxHeight = '450px';
 
     protected function getData(): array
     {
@@ -28,10 +27,6 @@ class StockOpnameTrendChart extends ChartWidget
             ->groupBy('month', 'sort_key')
             ->orderBy('sort_key', 'asc')
             ->get();
-
-        if ($data->isEmpty()) {
-            return ['datasets' => [], 'labels' => []];
-        }
 
         return [
             'datasets' => [
@@ -63,31 +58,20 @@ class StockOpnameTrendChart extends ChartWidget
     protected function getOptions(): array
     {
         return [
-            // 2. MATIKAN ASPECT RATIO (Biar tingginya mau ngikutin 400px)
+            // PENTING: Matikan ini biar tingginya bisa ngikutin target 450px
             'maintainAspectRatio' => false,
             'scales' => [
-                'y' => [
-                    'type' => 'linear',
-                    'display' => true,
-                    'position' => 'left',
-                    // Kita hapus tick formatter RawJs yang bikin blank
-                ],
+                'y' => ['display' => true, 'position' => 'left'],
                 'y1' => [
-                    'type' => 'linear',
                     'display' => true,
                     'position' => 'right',
                     'min' => 0,
                     'max' => 100,
-                    'grid' => [
-                        'drawOnChartArea' => false,
-                    ],
+                    'grid' => ['drawOnChartArea' => false],
                 ],
             ],
             'plugins' => [
-                'legend' => [
-                    'display' => true,
-                    'position' => 'bottom',
-                ],
+                'legend' => ['display' => true, 'position' => 'bottom'],
             ],
         ];
     }

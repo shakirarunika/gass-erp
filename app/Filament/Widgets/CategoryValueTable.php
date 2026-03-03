@@ -17,7 +17,6 @@ class CategoryValueTable extends BaseWidget
     {
         return $table
             ->query(
-                // 3. OTOMATIS SORT DARI VALUE TERBANYAK
                 Category::query()
                     ->select('categories.*')
                     ->addSelect([
@@ -29,27 +28,15 @@ class CategoryValueTable extends BaseWidget
                     ->orderByDesc('total_val')
             )
             ->columns([
-                // 2. INDIKATOR WARNA
                 Tables\Columns\TextColumn::make('id')
                     ->label('')
                     ->formatStateUsing(fn() => ' ')
                     ->extraAttributes(fn($record) => [
-                        'style' => 'background-color: ' . $this->getCategoryColor($record->id) . '; width: 12px; border-radius: 99px; margin-right: 10px;',
+                        'style' => 'background-color: ' . $this->getCategoryColor($record->id) . '; width: 12px; border-radius: 99px;',
                     ]),
-
-                Tables\Columns\TextColumn::make('name')
-                    ->label('Kategori')
-                    ->weight('bold'),
-
-                Tables\Columns\TextColumn::make('items_count')
-                    ->label('Item')
-                    ->counts('items')
-                    ->badge()
-                    ->color('gray'),
-
+                Tables\Columns\TextColumn::make('name')->label('Kategori')->weight('bold'),
                 Tables\Columns\TextColumn::make('total_val')
                     ->label('Total Valuasi')
-                    // 4. HAPUS DESIMAL ,00
                     ->formatStateUsing(fn($state) => 'Rp ' . number_format($state ?? 0, 0, ',', '.'))
                     ->color('success')
                     ->weight('bold')
@@ -58,11 +45,12 @@ class CategoryValueTable extends BaseWidget
             ->paginated(false);
     }
 
-    // 1. TINGGI WIDGET (Cara paling aman di v3)
+    // MATCHING TINGGI (UKURAN TARGET)
     protected function getTableAttributes(): array
     {
         return [
-            'style' => 'height: 400px; overflow-y: auto;',
+            // Set 450px biar sejajar sama chart di atas
+            'style' => 'height: 450px; overflow-y: auto;',
         ];
     }
 
