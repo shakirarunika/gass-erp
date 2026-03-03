@@ -3,39 +3,40 @@
 namespace App\Filament\Widgets;
 
 use App\Models\Category;
+use App\Models\InventoryStock;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
-use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 
 class CategoryValueTable extends BaseWidget
 {
     protected static ?string $heading = 'Komposisi Nilai Aset Per Kategori';
 
-    // Pastikan column span-nya 1 biar bagi dua sama chart
     protected int | string | array $columnSpan = 1;
 
     public function table(Table $table): Table
     {
         return $table
             ->query(
-                // 3. OTOMATIS SORT DARI VALUE TERBANYAK
+                // 3. SORT OTOMATIS BERDASARKAN VALUE TERBANYAK
                 Category::query()
+                    ->select('categories.*')
                     ->addSelect([
-                        'total_valuation' => \App\Models\Item::query()
-                            ->whereColumn('category_id', 'categories.id')
-                            ->join('inventory_stocks', 'items.id', '=', 'inventory_stocks.item_id')
+                        'total_val' => InventoryStock::query()
+                            ->join('items', 'items.id', '=', 'inventory_stocks.item_id')
+                            ->whereColumn('items.category_id', 'categories.id')
                             ->selectRaw('SUM(inventory_stocks.quantity * items.avg_cost)')
                     ])
-                    ->orderByDesc('total_valuation')
+                    ->orderByDesc('total_val')
             )
             ->columns([
-                // 2. INDIKATOR WARNA (Hardcoded per ID agar aman)
-                Tables\Columns\TextColumn::make('color_indicator')
+                // 2. INDIKATOR WARNA (Matching dengan Chart)
+                Tables\Columns\TextColumn::make('color')
                     ->label('')
                     ->getStateUsing(fn() => ' ')
                     ->extraAttributes(fn($record) => [
-                        'style' => 'background-color: ' . $this->getCategoryColor($record->id) . '; width: 8px; border-radius: 4px;',
+                        'style' => 'background-color: ' . $this->getCategoryColor($record->id) . '; width: 10px; border-radius: 99px;',
                     ]),
 
                 Tables\Columns\TextColumn::make('name')
@@ -48,25 +49,25 @@ class CategoryValueTable extends BaseWidget
                     ->badge()
                     ->color('gray'),
 
-                Tables\Columns\TextColumn::make('total_valuation')
+                Tables\Columns\TextColumn::make('total_val')
                     ->label('Total Valuasi')
                     // 4. HAPUS DESIMAL ,00
-                    ->formatStateUsing(fn($state) => 'IDR ' . number_format($state, 0, ',', '.'))
+                    ->formatStateUsing(fn($state) => 'Rp ' . number_format($state ?? 0, 0, ',', '.'))
                     ->color('success')
                     ->weight('bold')
                     ->alignEnd(),
             ])
             ->paginated(false)
-            // 1. TINGGI WIDGET SAMA RATA (Fix Height)
-            ->extraTableAttributes([
-                'style' => 'height: 380px; overflow-y: auto;',
+            // 1. TINGGI WIDGET SAMA RATA (Ganti extraTableAttributes jadi extraAttributes)
+            ->extraAttributes([
+                'class' => 'overflow-y-auto',
+                'style' => 'max-height: 400px;',
             ]);
     }
 
-    // Fungsi pembantu buat warna biar matching sama chart (Opsional)
     private function getCategoryColor($id): string
     {
         $colors = ['#36A2EB', '#FF6384', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#2ecc71', '#34495e'];
-        return $colors[$id % count($colors)] ?? '#cbd5e1';
+        return $colors[$id % count($colors)] ?? '#94a3b8';
     }
 }
