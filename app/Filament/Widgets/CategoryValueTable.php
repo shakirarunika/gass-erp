@@ -7,6 +7,7 @@ use App\Models\InventoryStock;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
+use Illuminate\Support\Facades\DB;
 
 class CategoryValueTable extends BaseWidget
 {
@@ -34,23 +35,32 @@ class CategoryValueTable extends BaseWidget
                     ->extraAttributes(fn($record) => [
                         'style' => 'background-color: ' . $this->getCategoryColor($record->id) . '; width: 12px; border-radius: 99px;',
                     ]),
-                Tables\Columns\TextColumn::make('name')->label('Kategori')->weight('bold'),
+
+                Tables\Columns\TextColumn::make('name')
+                    ->label('Kategori')
+                    ->weight('bold'),
+
                 Tables\Columns\TextColumn::make('total_val')
                     ->label('Total Valuasi')
                     ->formatStateUsing(fn($state) => 'Rp ' . number_format($state ?? 0, 0, ',', '.'))
                     ->color('success')
                     ->weight('bold')
-                    ->alignEnd(),
+                    ->alignEnd()
+                    // INI BUAT NAMPILIN TOTAL DI BAWAH
+                    ->summarize(
+                        Tables\Columns\Summarizers\Sum::make()
+                            ->label('GRAND TOTAL')
+                            ->formatStateUsing(fn($state) => 'Rp ' . number_format($state, 0, ',', '.'))
+                    ),
             ])
             ->paginated(false);
     }
 
-    // MATCHING TINGGI (UKURAN TARGET)
+    // MATCHING TINGGI (SAMA DENGAN CHART)
     protected function getTableAttributes(): array
     {
         return [
-            // Kita kunci di 400px biar matching sama chart di atas
-            'style' => 'height: 400px; overflow-y: auto;',
+            'style' => 'height: 450px; overflow-y: auto;',
         ];
     }
 
