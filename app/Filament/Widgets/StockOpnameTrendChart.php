@@ -4,7 +4,8 @@ namespace App\Filament\Widgets;
 
 use App\Models\StockOpnameDetail;
 use Filament\Widgets\ChartWidget;
-use Filament\Support\RawJs; // <--- WAJIB ADA INI
+use Filament\Support\RawJs;
+use Illuminate\Support\Facades\DB;
 
 class StockOpnameTrendChart extends ChartWidget
 {
@@ -13,6 +14,7 @@ class StockOpnameTrendChart extends ChartWidget
 
     protected function getData(): array
     {
+        // Ambil data asli dari DB
         $data = StockOpnameDetail::query()
             ->join('stock_opnames', 'stock_opnames.id', '=', 'stock_opname_details.stock_opname_id')
             ->selectRaw("
@@ -25,6 +27,14 @@ class StockOpnameTrendChart extends ChartWidget
             ->groupBy('month', 'sort_key')
             ->orderBy('sort_key', 'asc')
             ->get();
+
+        // Kalau DB beneran kosong, jangan kasih grafik kosong biar gak error
+        if ($data->isEmpty()) {
+            return [
+                'datasets' => [],
+                'labels' => [],
+            ];
+        }
 
         return [
             'datasets' => [
@@ -61,7 +71,6 @@ class StockOpnameTrendChart extends ChartWidget
                     'type' => 'linear',
                     'display' => true,
                     'position' => 'left',
-                    'title' => ['display' => true, 'text' => 'Nilai Aset'],
                     'ticks' => [
                         'callback' => RawJs::make(<<<JS
                             function(value) {
@@ -78,14 +87,9 @@ class StockOpnameTrendChart extends ChartWidget
                     'position' => 'right',
                     'min' => 0,
                     'max' => 100,
-                    'grid' => ['drawOnChartArea' => false],
-                    'title' => ['display' => true, 'text' => 'Akurasi (%)'],
-                ],
-            ],
-            'plugins' => [
-                'legend' => [
-                    'display' => true,
-                    'position' => 'bottom',
+                    'grid' => [
+                        'drawOnChartArea' => false,
+                    ],
                 ],
             ],
         ];
