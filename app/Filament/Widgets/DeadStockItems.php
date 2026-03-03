@@ -12,8 +12,7 @@ class DeadStockItems extends BaseWidget
 {
     protected static ?string $heading = 'Barang Mati (Tidak Bergerak > 6 Bulan)';
 
-    // Biar tabelnya agak lebar
-    protected int | string | array $columnSpan = 1;
+    protected int | string | array $columnSpan = 2;
 
     public function table(Table $table): Table
     {
