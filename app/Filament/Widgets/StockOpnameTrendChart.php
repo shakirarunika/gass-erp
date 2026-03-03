@@ -4,7 +4,6 @@ namespace App\Filament\Widgets;
 
 use App\Models\StockOpnameDetail;
 use Filament\Widgets\ChartWidget;
-use Filament\Support\RawJs;
 use Illuminate\Support\Facades\DB;
 
 class StockOpnameTrendChart extends ChartWidget
@@ -12,7 +11,7 @@ class StockOpnameTrendChart extends ChartWidget
     protected static ?string $heading = 'Trend Akurasi & Valuasi SO';
     protected int | string | array $columnSpan = 1;
 
-    // 1. KUNCI TINGGI BIAR SAMA RATA DENGAN TABEL
+    // 1. TETAP KUNCI TINGGI (Ini Aman karena CSS Biasa)
     protected static ?string $maxHeight = '400px';
 
     protected function getData(): array
@@ -31,10 +30,7 @@ class StockOpnameTrendChart extends ChartWidget
             ->get();
 
         if ($data->isEmpty()) {
-            return [
-                'datasets' => [],
-                'labels' => [],
-            ];
+            return ['datasets' => [], 'labels' => []];
         }
 
         return [
@@ -67,23 +63,14 @@ class StockOpnameTrendChart extends ChartWidget
     protected function getOptions(): array
     {
         return [
-            // 2. MATIKAN ASPECT RATIO BIAR TINGGI BISA DIPAKSA
+            // 2. MATIKAN ASPECT RATIO (Biar tingginya mau ngikutin 400px)
             'maintainAspectRatio' => false,
             'scales' => [
                 'y' => [
                     'type' => 'linear',
                     'display' => true,
                     'position' => 'left',
-                    'ticks' => [
-                        // 3. SINGKAT ANGKA (Rp 180 Jt vs 180.000.000)
-                        'callback' => RawJs::make(<<<JS
-                            function(value) {
-                                if (value >= 1000000) return 'Rp ' + (value / 1000000).toFixed(1) + ' Jt';
-                                if (value >= 1000) return 'Rp ' + (value / 1000).toFixed(0) + ' Rb';
-                                return 'Rp ' + value;
-                            }
-                        JS),
-                    ],
+                    // Kita hapus tick formatter RawJs yang bikin blank
                 ],
                 'y1' => [
                     'type' => 'linear',
@@ -99,7 +86,7 @@ class StockOpnameTrendChart extends ChartWidget
             'plugins' => [
                 'legend' => [
                     'display' => true,
-                    'position' => 'bottom', // Legend di bawah biar grafik lebih lega
+                    'position' => 'bottom',
                 ],
             ],
         ];
