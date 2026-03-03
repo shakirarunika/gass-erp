@@ -10,7 +10,7 @@ use Filament\Widgets\TableWidget as BaseWidget;
 class LatestLowStockItems extends BaseWidget
 {
     // Biar tabelnya cukup lebar dan enak dibaca
-    protected int | string | array $columnSpan = 1;
+    protected int | string | array $columnSpan = 'full';
 
     // Beri judul yang tegas
     protected static ?string $heading = 'DAFTAR STOK KRITIS (ORDER SEGERA!)';

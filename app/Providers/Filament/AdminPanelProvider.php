@@ -20,8 +20,9 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Filament\View\PanelsRenderHook;
 use Illuminate\Support\Facades\Blade;
 
-// Import Widget Sesuai Request Management
+// Import Semua Widget yang Dibutuhkan
 use App\Filament\Widgets\StatsOverview;
+use App\Filament\Widgets\StockOpnameTrendChart; // Ini yang tadi ketinggalan
 use App\Filament\Widgets\CategoryValueChart;
 use App\Filament\Widgets\LatestLowStockItems;
 use App\Filament\Widgets\DeadStockItems;
@@ -38,7 +39,6 @@ class AdminPanelProvider extends PanelProvider
             ->profile()
             ->brandName('G.A.S.S. | GA Stock System')
             ->sidebarCollapsibleOnDesktop()
-            ->favicon(asset('images/favicon.ico'))
             ->colors([
                 'primary' => Color::Slate,
             ])
@@ -49,17 +49,21 @@ class AdminPanelProvider extends PanelProvider
                 Pages\Dashboard::class,
             ])
             ->widgets([
-                // 1 & 2. Total Nilai Aset & Jumlah Barang (Stats Overview)
+                // Baris 1: Angka Ringkasan (Valuasi & Total Barang)
                 StatsOverview::class,
 
-                // 3. Valuasi per Kategori (Chart)
+                // Baris 2: Grafik berdampingan (Trend SO & Komposisi Kategori)
+                StockOpnameTrendChart::class,
                 CategoryValueChart::class,
 
-                // 4. Barang di Bawah Minimal Stok (Table)
+                // Baris 3: Tabel rincian risiko (Stok Tipis & Barang Mati)
                 LatestLowStockItems::class,
-
-                // 5. Barang Mati / Tidak Bergerak (Table)
                 DeadStockItems::class,
+            ])
+            // PENTING: Atur grid biar gak tumpuk-tumpukan
+            ->columns([
+                'md' => 1,
+                'lg' => 2, // Desktop jadi 2 kolom
             ])
             ->middleware([
                 EncryptCookies::class,
@@ -74,17 +78,6 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
-            ])
-            ->renderHook(
-                PanelsRenderHook::FOOTER,
-                fn() => Blade::render(<<<HTML
-                <div class="flex items-center justify-center w-full p-4 text-xs font-medium text-gray-500 bg-white dark:bg-gray-900 dark:text-gray-400 border-t border-gray-200 dark:border-gray-800">
-                    <span>
-                        &copy; {{ date('Y') }} General Affairs Stock System. Built with <span class="text-red-500">❤</span> by 
-                        <a href="https://www.instagram.com/faishalma_" target="_blank" rel="noopener noreferrer" class="text-primary-600 hover:underline">Faishal Muhammad</a>.
-                    </span>
-                </div>
-            HTML)
-            );
+            ]);
     }
 }

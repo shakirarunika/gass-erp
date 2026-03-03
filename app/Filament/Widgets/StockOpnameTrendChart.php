@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 class StockOpnameTrendChart extends ChartWidget
 {
     protected static ?string $heading = 'Trend Akurasi & Valuasi SO';
-    protected static ?int $sort = 1;
+    protected int | string | array $columnSpan = 1;
 
     protected function getData(): array
     {

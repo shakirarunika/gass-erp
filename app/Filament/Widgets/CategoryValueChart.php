@@ -12,7 +12,7 @@ class CategoryValueChart extends ChartWidget
 
     // Atur ukuran agar proporsional di dashboard
     protected int | string | array $columnSpan = 1;
-    protected static ?string $maxHeight = '260px';
+
 
     protected function getData(): array
     {
