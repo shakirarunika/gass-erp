@@ -9,7 +9,7 @@ use Filament\Widgets\TableWidget as BaseWidget;
 
 class LatestLowStockItems extends BaseWidget
 {
-    // Biar tabelnya cukup lebar dan enak dibaca
+
     protected int | string | array $columnSpan = 'full';
 
     // Beri judul yang tegas

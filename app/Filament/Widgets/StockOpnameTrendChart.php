@@ -8,10 +8,8 @@ use Filament\Widgets\ChartWidget;
 class StockOpnameTrendChart extends ChartWidget
 {
     protected static ?string $heading = 'Trend Akurasi & Valuasi SO';
-    protected int | string | array $columnSpan = 1;
 
-    // Tetap kunci tingginya di sini biar sejajar sama tabel sebelah
-    protected static ?string $maxHeight = '900px';
+    protected int | string | array $columnSpan = 'full';
 
     protected function getData(): array
     {

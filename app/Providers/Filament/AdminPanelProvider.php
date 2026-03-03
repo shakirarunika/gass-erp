@@ -24,10 +24,10 @@ use Illuminate\Support\HtmlString;
 // Import Widget
 use App\Filament\Widgets\StatsOverview;
 use App\Filament\Widgets\StockOpnameTrendChart;
-use App\Filament\Widgets\CategoryValueChart;
+use App\Filament\Widgets\DeadStockItems;
 use App\Filament\Widgets\CategoryValueTable;
 use App\Filament\Widgets\LatestLowStockItems;
-use App\Filament\Widgets\DeadStockItems;
+
 
 class AdminPanelProvider extends PanelProvider
 {
