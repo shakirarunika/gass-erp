@@ -78,31 +78,54 @@ class InventoryStockResource extends Resource
     {
         return $table
             ->striped()
-            // 👇 OPTIMASI: Eager Load relasi biar loading cepat (Anti Lemot)
-            ->modifyQueryUsing(fn(Builder $query) => $query->with(['item.unit', 'warehouse', 'item.category'])) // Tambahin item.category di sini
+            ->modifyQueryUsing(fn(Builder $query) => $query->with(['item.unit', 'warehouse', 'item.category']))
             ->columns([
-                Tables\Columns\TextColumn::make('warehouse.name')
-                    ->label('Gudang')
+                // 1. TAMBAH KATEGORI (Biar enak liat pengelompokannya)
+                Tables\Columns\TextColumn::make('item.category.name')
+                    ->label('Kategori')
+                    ->badge()
+                    ->color('info')
                     ->sortable()
                     ->searchable(),
 
+                // 2. TAMBAH KODE BARANG (Berdiri sendiri biar gampang dicari)
+                Tables\Columns\TextColumn::make('item.code')
+                    ->label('Kode')
+                    ->copyable()
+                    ->searchable()
+                    ->sortable(),
+
                 Tables\Columns\TextColumn::make('item.name')
                     ->label('Nama Barang')
-                    ->description(fn(InventoryStock $record) => $record->item->code ?? '-')
                     ->searchable()
+                    ->sortable()
+                    ->wrap(),
+
+                Tables\Columns\TextColumn::make('warehouse.name')
+                    ->label('Gudang')
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('quantity')
                     ->label('Sisa Stok')
-                    ->numeric() // Biar ada koma/titik ribuan (1,000)
+                    ->numeric()
                     ->weight('bold')
                     ->suffix(fn(InventoryStock $record) => " " . ($record->item->unit->name ?? ''))
-                    // Logic Warna: Merah jika <= Min Stock
                     ->color(
                         fn(InventoryStock $record) =>
                         $record->quantity <= ($record->item->min_stock ?? 0) ? 'danger' : 'success'
                     )
                     ->sortable(),
+
+                // 3. TAMBAH TOTAL VALUASI (Qty * Harga Modal)
+                Tables\Columns\TextColumn::make('total_value')
+                    ->label('Nilai Aset')
+                    ->money('IDR')
+                    ->state(function (InventoryStock $record) {
+                        return $record->quantity * ($record->item->avg_cost ?? 0);
+                    })
+                    ->color('primary')
+                    ->weight('bold')
+                    ->sortable(false), // Karena ini computed field
 
                 Tables\Columns\TextColumn::make('rack_location')
                     ->label('Lokasi Rak')
@@ -111,18 +134,17 @@ class InventoryStockResource extends Resource
                     ->icon('heroicon-o-map-pin')
                     ->searchable()
                     ->placeholder('Belum set'),
-
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->label('Update Terakhir')
-                    ->dateTime('d M Y H:i')
-                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 SelectFilter::make('warehouse_id')
                     ->label('Filter Gudang')
                     ->relationship('warehouse', 'name'),
 
-                // Filter Stok Kritis (SQL Raw)
+                // Tambahin Filter Kategori di sini biar makin pro
+                SelectFilter::make('category_id')
+                    ->label('Filter Kategori')
+                    ->relationship('item.category', 'name'),
+
                 Filter::make('low_stock')
                     ->label('Hanya Stok Menipis')
                     ->toggle()
@@ -137,36 +159,29 @@ class InventoryStockResource extends Resource
                     ->color('success')
                     ->icon('heroicon-o-document-arrow-down')
                     ->exports([
-                        // OPSI 1: Download sesuai filter yang lagi aktif di layar
-                        ExcelExport::make('filtered')
-                            ->label('Sesuai Filter Layar')
-                            ->fromTable()
-                            ->withFilename('Stok-Terfilter-' . date('d-M-Y')),
-
-                        // OPSI 2: Download SEMUA barang di tabel InventoryStock (Tanpa peduli filter)
                         ExcelExport::make('all')
-                            ->label('Semua Barang (Full Dump)')
-                            ->fromModel() // <--- Ini kuncinya, dia narik langsung dari Model, bukan dari Table state
-                            ->withFilename('Full-Inventory-Dump-' . date('d-M-Y'))
+                            ->label('Download Full (Excel)')
+                            ->fromModel()
+                            ->withFilename('Inventory-Report-' . date('d-M-Y'))
                             ->withColumns([
                                 Column::make('warehouse.name')->heading('Gudang'),
                                 Column::make('item.category.name')->heading('Kategori'),
+                                Column::make('item.code')->heading('Kode Barang'),
                                 Column::make('item.name')->heading('Nama Barang'),
                                 Column::make('rack_location')->heading('Lokasi Rak'),
-                                Column::make('item.unit.name')->heading('Satuan'),
                                 Column::make('quantity')->heading('Qty Sistem'),
-                                Column::make('qty_fisik')->heading('Qty Fisik (Isi Manual)')->formatStateUsing(fn() => ''),
+                                Column::make('item.unit.name')->heading('Satuan'),
+                                // Nilai Aset di Excel
+                                Column::make('total_value')->heading('Total Valuasi (IDR)')
+                                    ->formatStateUsing(fn($record) => $record->quantity * ($record->item->avg_cost ?? 0)),
                             ]),
                     ]),
             ])
             ->actions([
                 Tables\Actions\EditAction::make()
-                    ->label('Pindah Rak')
-                    ->icon('heroicon-o-pencil')
-                    ->modalWidth('lg'),
-            ])
-            ->bulkActions([
-                // Kosongkan Bulk Actions demi keamanan
+                    ->label('Update Rak')
+                    ->modalHeading('Update Lokasi Penyimpanan')
+                    ->icon('heroicon-o-pencil-square'),
             ]);
     }
 
