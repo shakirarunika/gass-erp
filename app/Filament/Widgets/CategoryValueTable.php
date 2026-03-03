@@ -49,8 +49,8 @@ class CategoryValueTable extends BaseWidget
     protected function getTableAttributes(): array
     {
         return [
-            // Set 450px biar sejajar sama chart di atas
-            'style' => 'height: 450px; overflow-y: auto;',
+            // Kita kunci di 400px biar matching sama chart di atas
+            'style' => 'height: 400px; overflow-y: auto;',
         ];
     }
 

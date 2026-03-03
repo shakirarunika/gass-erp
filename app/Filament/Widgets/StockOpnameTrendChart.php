@@ -10,9 +10,6 @@ class StockOpnameTrendChart extends ChartWidget
     protected static ?string $heading = 'Trend Akurasi & Valuasi SO';
     protected int | string | array $columnSpan = 1;
 
-    // 1. SET TINGGI DI LEVEL CLASS (UKURAN TARGET)
-    protected static ?string $maxHeight = '450px';
-
     protected function getData(): array
     {
         $data = StockOpnameDetail::query()
@@ -58,8 +55,9 @@ class StockOpnameTrendChart extends ChartWidget
     protected function getOptions(): array
     {
         return [
-            // PENTING: Matikan ini biar tingginya bisa ngikutin target 450px
-            'maintainAspectRatio' => false,
+            // 1. TRIK ANTI-GEPENG: Angka 0.8 bikin grafik jadi jangkung/tinggi
+            'aspectRatio' => 0.8,
+            'maintainAspectRatio' => true,
             'scales' => [
                 'y' => ['display' => true, 'position' => 'left'],
                 'y1' => [
@@ -69,6 +67,11 @@ class StockOpnameTrendChart extends ChartWidget
                     'max' => 100,
                     'grid' => ['drawOnChartArea' => false],
                 ],
+            ],
+            // 2. FIX ERROR hitRadius (image_b71b06.png)
+            'interaction' => [
+                'intersect' => false,
+                'mode' => 'index',
             ],
             'plugins' => [
                 'legend' => ['display' => true, 'position' => 'bottom'],
