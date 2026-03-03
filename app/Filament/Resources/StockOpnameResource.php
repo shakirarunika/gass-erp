@@ -32,6 +32,7 @@ class StockOpnameResource extends Resource
         return $form
             ->schema([
                 Forms\Components\Section::make('Info Audit')
+                    ->disabled(fn($record) => $record?->status === 'PROCESSED')
                     ->description('Pilih gudang untuk memuat daftar stok sistem secara otomatis.')
                     ->schema([
                         Forms\Components\Select::make('warehouse_id')
@@ -93,6 +94,7 @@ class StockOpnameResource extends Resource
                     ->schema([
                         Forms\Components\Repeater::make('details')
                             ->relationship('details') // WAJIB ada di Model!
+                            ->disabled(fn($record) => $record?->status === 'PROCESSED')
                             ->schema([
                                 Forms\Components\Select::make('item_id')
                                     ->relationship('item', 'name')
@@ -150,14 +152,15 @@ class StockOpnameResource extends Resource
                     ->state(fn(StockOpname $record) => $record->details()->count()),
 
                 Tables\Columns\TextColumn::make('accuracy')
-                    ->label('Akurasi Audit')
-                    ->state(fn(StockOpname $record): string => $record->accuracy . '%')
+                    ->label('Akurasi')
+                    ->suffix('%')
                     ->badge()
                     ->color(fn($state) => match (true) {
-                        (float) $state >= 95 => 'success', // Hijau kalau sangat akurat
-                        (float) $state >= 80 => 'warning', // Kuning kalau ada selisih dikit
-                        default => 'danger',               // Merah kalau gudang lo berantakan
-                    }),
+                        $state >= 99 => 'success',
+                        $state >= 95 => 'warning',
+                        default => 'danger',
+                    })
+                    ->description(fn(StockOpname $record) => "Total: " . $record->details()->count() . " Item"),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
