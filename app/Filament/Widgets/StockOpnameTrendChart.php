@@ -7,6 +7,7 @@ use Filament\Widgets\ChartWidget;
 
 class StockOpnameTrendChart extends ChartWidget
 {
+    protected static ?string $maxHeight = '300px';
     protected static ?string $heading = 'Trend Akurasi & Valuasi SO';
 
     protected int | string | array $columnSpan = 'full';
@@ -59,6 +60,7 @@ class StockOpnameTrendChart extends ChartWidget
             'maintainAspectRatio' => false,
             'scales' => [
                 'y' => [
+                    'beginAtZero' => true,
                     'type' => 'linear',
                     'display' => true,
                     'position' => 'left',
