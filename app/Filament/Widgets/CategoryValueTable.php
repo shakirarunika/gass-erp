@@ -12,7 +12,8 @@ use Illuminate\Support\Facades\DB;
 class CategoryValueTable extends BaseWidget
 {
     protected static ?string $heading = 'Komposisi Nilai Aset Per Kategori';
-    protected int | string | array $columnSpan = 1;
+    protected static ?int $sort = 2;
+    protected int | string | array $columnSpan = 1; // Mengambil setengah layar
 
     public function table(Table $table): Table
     {
@@ -59,9 +60,7 @@ class CategoryValueTable extends BaseWidget
     // MATCHING TINGGI (SAMA DENGAN CHART)
     protected function getTableAttributes(): array
     {
-        return [
-            'style' => 'height: 450px; overflow-y: auto;',
-        ];
+        return ['style' => 'height: 400px; overflow-y: auto;'];
     }
 
     private function getCategoryColor($id): string

@@ -10,7 +10,8 @@ use Filament\Widgets\TableWidget as BaseWidget;
 class LatestLowStockItems extends BaseWidget
 {
 
-    protected int | string | array $columnSpan = 'full';
+    protected static ?int $sort = 4;
+    protected int | string | array $columnSpan = 'full'; // Menguasai baris bawah
 
     // Beri judul yang tegas
     protected static ?string $heading = 'DAFTAR BARANG DIBAWAH MINIMAL STOK';

@@ -12,7 +12,8 @@ class DeadStockItems extends BaseWidget
 {
     protected static ?string $heading = 'Barang Mati (Tidak Bergerak > 6 Bulan)';
 
-    protected int | string | array $columnSpan = 2;
+    protected static ?int $sort = 3;
+    protected int | string | array $columnSpan = 1; // Setengah layar sisanya
 
     public function table(Table $table): Table
     {
@@ -63,5 +64,9 @@ class DeadStockItems extends BaseWidget
                     ->url(fn(Item $record): string => "/admin/items/{$record->id}/edit")
                     ->icon('heroicon-m-eye'),
             ]);
+    }
+    protected function getTableAttributes(): array
+    {
+        return ['style' => 'height: 400px; overflow-y: auto;']; // Tinggi harus sama!
     }
 }

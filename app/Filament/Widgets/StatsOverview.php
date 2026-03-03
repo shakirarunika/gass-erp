@@ -10,6 +10,7 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 class StatsOverview extends BaseWidget
 {
 
+    protected static ?int $sort = 1;
     protected int | string | array $columnSpan = 'full';
 
     // app/Filament/Widgets/StatsOverview.php
