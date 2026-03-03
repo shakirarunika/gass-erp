@@ -67,42 +67,45 @@ class CategoryValueChart extends ChartWidget
     protected function getOptions(): array
     {
         return [
-            'indexAxis' => 'y',
+            'indexAxis' => 'y', // Tetap horizontal
             'plugins' => [
-                'legend' => [
-                    'display' => false,
-                ],
-                'tooltip' => [
-                    'callbacks' => [
-                        'label' => [
-                            'callback' => 'function(context) {
-                                const value = context.raw ?? 0;
-                                return new Intl.NumberFormat("id-ID", {
-                                    style: "currency",
-                                    currency: "IDR",
-                                    maximumFractionDigits: 0,
-                                }).format(value);
-                            }',
-                        ],
+                'legend' => ['display' => false], // Hapus legend biar luas
+                // --- INI KONFIGURASI DATALABELS ---
+                'datalabels' => [
+                    'anchor' => 'end', // Taruh di ujung batang
+                    'align' => 'end',   // Rata kanan dari ujung
+                    'color' => '#555',  // Warna teks angka
+                    'font' => [
+                        'weight' => 'bold',
+                        'size' => 12,
                     ],
+                    // Fungsi buat format angka jadi "Rp 55.9 Jt"
+                    'formatter' => \Filament\Support\RawJs::make(<<<JS
+                    function(value) {
+                        if (value === null || value === 0) return '';
+                        if (value >= 1000000) return 'Rp ' + (value / 1000000).toFixed(1) + ' Jt';
+                        if (value >= 1000) return 'Rp ' + (value / 1000).toFixed(0) + ' Rb';
+                        return 'Rp ' + value.toLocaleString('id-ID');
+                    }
+                JS),
                 ],
             ],
             'scales' => [
                 'x' => [
-                    'ticks' => [
-                        'callback' => 'function(value) {
-                            return new Intl.NumberFormat("id-ID", {
-                                notation: "compact",
-                                compactDisplay: "short",
-                                maximumFractionDigits: 1,
-                            }).format(value);
-                        }',
-                    ],
+                    'display' => false, // Hapus garis bawah biar bersih
+                    'grid' => ['display' => false],
                 ],
                 'y' => [
+                    'grid' => ['display' => false], // Hapus garis vertikal
                     'ticks' => [
-                        'autoSkip' => false,
+                        'font' => ['weight' => 'bold', 'size' => 13],
                     ],
+                ],
+            ],
+            // PENTING: Kasih padding kanan biar angkanya gak kepotong
+            'layout' => [
+                'padding' => [
+                    'right' => 70,
                 ],
             ],
         ];
