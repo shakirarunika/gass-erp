@@ -10,7 +10,7 @@ class StockOpnameTrendChart extends ChartWidget
     protected static ?string $heading = 'Trend Akurasi & Valuasi SO';
     protected int | string | array $columnSpan = 1;
 
-    // 1. SET TINGGI TARGET (SAMA DENGAN TABEL)
+    // Tetap kunci tingginya di sini biar sejajar sama tabel sebelah
     protected static ?string $maxHeight = '450px';
 
     protected function getData(): array
@@ -58,16 +58,30 @@ class StockOpnameTrendChart extends ChartWidget
     protected function getOptions(): array
     {
         return [
-            // MATIKAN INI BIAR TINGGI MAU MENGIKUTI 450PX
             'maintainAspectRatio' => false,
             'scales' => [
-                'y' => ['display' => true, 'position' => 'left'],
+                'y' => [
+                    'type' => 'linear',
+                    'display' => true,
+                    'position' => 'left',
+                    'ticks' => [
+                        // KELIPATAN 20 JUTA
+                        'stepSize' => 20000000,
+                    ],
+                ],
                 'y1' => [
+                    'type' => 'linear',
                     'display' => true,
                     'position' => 'right',
                     'min' => 0,
                     'max' => 100,
-                    'grid' => ['drawOnChartArea' => false],
+                    'ticks' => [
+                        // KELIPATAN 20%
+                        'stepSize' => 20,
+                    ],
+                    'grid' => [
+                        'drawOnChartArea' => false,
+                    ],
                 ],
             ],
             'plugins' => [
