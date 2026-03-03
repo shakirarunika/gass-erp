@@ -52,7 +52,12 @@ class StockOpnameTrendChart extends ChartWidget
             'labels' => $data->pluck('month')->toArray(),
         ];
     }
-
+    protected function getTableAttributes(): array
+    {
+        return [
+            'style' => 'max-height: 380px; overflow-y: auto;',
+        ];
+    }
     protected function getType(): string
     {
         return 'bar';
