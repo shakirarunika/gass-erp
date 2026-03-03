@@ -11,7 +11,7 @@ class StockOpnameTrendChart extends ChartWidget
     protected int | string | array $columnSpan = 1;
 
     // Tetap kunci tingginya di sini biar sejajar sama tabel sebelah
-    protected static ?string $maxHeight = '450px';
+    protected static ?string $maxHeight = '900px';
 
     protected function getData(): array
     {
