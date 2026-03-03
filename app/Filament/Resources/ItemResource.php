@@ -29,7 +29,14 @@ class ItemResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-cube';
     protected static ?string $navigationGroup = 'Master Data';
     protected static ?int $navigationSort = 3;
+    protected static ?string $recordTitleAttribute = 'name';
 
+
+    public static function getGlobalSearchResultTitle(Model $record): string
+    {
+        // Hasilnya: "SEPATU SAFETY (SRG00001)"
+        return "{$record->name} ({$record->code})";
+    }
     /**
      * Menampilkan angka merah di sidebar jika ada stok di bawah minimum
      */
