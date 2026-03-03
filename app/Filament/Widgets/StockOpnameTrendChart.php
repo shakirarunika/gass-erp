@@ -5,7 +5,6 @@ namespace App\Filament\Widgets;
 use App\Models\StockOpnameDetail;
 use Filament\Widgets\ChartWidget;
 use Filament\Support\RawJs;
-use Illuminate\Support\Facades\DB;
 
 class StockOpnameTrendChart extends ChartWidget
 {
@@ -14,7 +13,6 @@ class StockOpnameTrendChart extends ChartWidget
 
     protected function getData(): array
     {
-        // Ambil data asli dari DB
         $data = StockOpnameDetail::query()
             ->join('stock_opnames', 'stock_opnames.id', '=', 'stock_opname_details.stock_opname_id')
             ->selectRaw("
@@ -28,29 +26,26 @@ class StockOpnameTrendChart extends ChartWidget
             ->orderBy('sort_key', 'asc')
             ->get();
 
-        // Kalau DB beneran kosong, jangan kasih grafik kosong biar gak error
         if ($data->isEmpty()) {
-            return [
-                'datasets' => [],
-                'labels' => [],
-            ];
+            return ['datasets' => [], 'labels' => []];
         }
 
         return [
             'datasets' => [
                 [
                     'label' => 'Valuasi Fisik (Rp)',
-                    'data' => $data->pluck('total_valuation')->toArray(),
+                    'data' => $data->pluck('total_valuation')->map(fn($v) => (float) $v)->toArray(),
                     'backgroundColor' => '#36A2EB',
                     'borderColor' => '#36A2EB',
                     'yAxisID' => 'y',
                 ],
                 [
                     'label' => 'Akurasi (%)',
-                    'data' => $data->pluck('accuracy')->toArray(),
+                    'data' => $data->pluck('accuracy')->map(fn($v) => (float) $v)->toArray(),
                     'borderColor' => '#FF6384',
                     'backgroundColor' => '#FF6384',
                     'type' => 'line',
+                    'fill' => false, // Tambahkan ini biar gak narik fill warna
                     'yAxisID' => 'y1',
                 ],
             ],
@@ -66,6 +61,8 @@ class StockOpnameTrendChart extends ChartWidget
     protected function getOptions(): array
     {
         return [
+            'responsive' => true,
+            'maintainAspectRatio' => false,
             'scales' => [
                 'y' => [
                     'type' => 'linear',
@@ -87,10 +84,13 @@ class StockOpnameTrendChart extends ChartWidget
                     'position' => 'right',
                     'min' => 0,
                     'max' => 100,
-                    'grid' => [
-                        'drawOnChartArea' => false,
-                    ],
+                    'grid' => ['drawOnChartArea' => false],
                 ],
+            ],
+            // Tambahkan ini untuk memperbaiki error "hitRadius"
+            'interaction' => [
+                'intersect' => false,
+                'mode' => 'index',
             ],
         ];
     }
