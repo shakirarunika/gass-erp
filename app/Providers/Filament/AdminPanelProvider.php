@@ -20,9 +20,9 @@ use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Filament\View\PanelsRenderHook;
 use Illuminate\Support\Facades\Blade;
 
-// Import Semua Widget yang Dibutuhkan
+// Import Widget
 use App\Filament\Widgets\StatsOverview;
-use App\Filament\Widgets\StockOpnameTrendChart; // Ini yang tadi ketinggalan
+use App\Filament\Widgets\StockOpnameTrendChart;
 use App\Filament\Widgets\CategoryValueChart;
 use App\Filament\Widgets\LatestLowStockItems;
 use App\Filament\Widgets\DeadStockItems;
@@ -49,21 +49,11 @@ class AdminPanelProvider extends PanelProvider
                 Pages\Dashboard::class,
             ])
             ->widgets([
-                // Baris 1: Angka Ringkasan (Valuasi & Total Barang)
                 StatsOverview::class,
-
-                // Baris 2: Grafik berdampingan (Trend SO & Komposisi Kategori)
                 StockOpnameTrendChart::class,
                 CategoryValueChart::class,
-
-                // Baris 3: Tabel rincian risiko (Stok Tipis & Barang Mati)
                 LatestLowStockItems::class,
                 DeadStockItems::class,
-            ])
-            // PENTING: Atur grid biar gak tumpuk-tumpukan
-            ->columns([
-                'md' => 1,
-                'lg' => 2, // Desktop jadi 2 kolom
             ])
             ->middleware([
                 EncryptCookies::class,
