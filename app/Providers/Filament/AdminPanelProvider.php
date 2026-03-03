@@ -17,8 +17,9 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
-use Filament\View\PanelsRenderHook;
-use Illuminate\Support\Facades\Blade;
+use Filament\View\PanelsRenderHook; // Pastikan ini ada
+use Illuminate\Support\Facades\Blade; // Pastikan ini ada
+use Illuminate\Support\HtmlString;
 
 // Import Widget
 use App\Filament\Widgets\StatsOverview;
@@ -68,6 +69,24 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
-            ]);
+            ])
+            // --- INI BAGIAN YANG DITAMBAHKAN ---
+            ->renderHook(
+                PanelsRenderHook::HEAD_END,
+                fn(): HtmlString => new HtmlString('
+                    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+                ')
+            )
+            ->renderHook(
+                PanelsRenderHook::FOOTER,
+                fn() => Blade::render('
+                    <div class="flex items-center justify-center w-full p-4 text-xs font-medium text-gray-500 bg-white dark:bg-gray-900 dark:text-gray-400 border-t border-gray-200 dark:border-gray-800">
+                        <span>
+                            &copy; {{ date("Y") }} General Affairs Stock System. Built with <span class="text-red-500">❤</span> by 
+                            <a href="https://www.instagram.com/faishalma_" target="_blank" class="text-primary-600 hover:underline">Faishal Muhammad</a>.
+                        </span>
+                    </div>
+                ')
+            );
     }
 }
