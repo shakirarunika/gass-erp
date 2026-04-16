@@ -45,7 +45,7 @@ class StockOpname extends Model
         });
 
         static::created(function ($model) {
-            // Begitu Header SO berhasil disimpan, server otomatis buatin detailnya di background
+            // Logic ini jalan di background SETELAH lu klik 'Create' di web
             $allItems = \App\Models\Item::all();
 
             foreach ($allItems as $item) {
@@ -54,9 +54,10 @@ class StockOpname extends Model
                     ->first();
 
                 $model->details()->create([
-                    'item_id'    => $item->id,
-                    'system_qty' => $stock ? $stock->quantity : 0,
-                    'physical_qty' => 0,
+                    'item_id'      => $item->id,
+                    'system_qty'   => $stock ? $stock->quantity : 0,
+                    'physical_qty' => 0, // Default 0 dulu, nanti diisi via Excel
+                    'cost_at_opname' => $item->avg_cost ?? 0,
                 ]);
             }
         });

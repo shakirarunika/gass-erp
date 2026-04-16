@@ -98,6 +98,7 @@ class StockOpnameResource extends Resource
                     ])->columns(3),
 
                 Forms\Components\Section::make('Hasil Hitung Fisik')
+                    ->hiddenOn('create')
                     ->schema([
                         Forms\Components\Repeater::make('details')
                             ->relationship('details') // WAJIB ada di Model!
