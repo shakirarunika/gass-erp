@@ -95,9 +95,9 @@ class StockOpnameResource extends Resource
                             ->required()
                             // Proteksi Acting Supervisor: Cuma Admin yang bisa finalisasi
                             ->disabled(fn(string $operation) => $operation === 'edit' && auth()->user()->role !== 'ADMIN'),
-                    ])->columns(3),
+                    ])->columns(3)
 
-                Forms\Components\Section::make('Hasil Hitung Fisik')
+                /* Forms\Components\Section::make('Hasil Hitung Fisik')
                     ->hiddenOn('create')
                     ->schema([
                         Forms\Components\Repeater::make('details')
@@ -140,7 +140,7 @@ class StockOpnameResource extends Resource
                             ->columns(5)
                             ->addable(false)
                             ->deletable(false)
-                    ])
+                    ])*/
             ]);
     }
 

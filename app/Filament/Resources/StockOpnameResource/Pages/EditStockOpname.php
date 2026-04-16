@@ -19,17 +19,26 @@ class EditStockOpname extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            // STEP 1: EXPORT (Ambil data dari database ke Excel)
+            // STEP 1: EXPORT (Optimasi Memory & Time)
             Actions\Action::make('exportTemplate')
                 ->label('1. Download Template')
                 ->icon('heroicon-o-document-arrow-down')
                 ->color('info')
-                ->action(fn() => Excel::download(
-                    new StockOpnameExport($this->record),
-                    "Template-SO-{$this->record->code}.xlsx"
-                )),
+                ->action(function () {
+                    // Paksa server kasih napas lebih (Memory & Time)
+                    ini_set('memory_limit', '512M');
+                    ini_set('max_execution_time', '300');
 
-            // STEP 2: IMPORT (Masukkan data dari Excel ke database)
+                    // Bersihkan buffer biar file gak korup
+                    if (ob_get_level() > 0) ob_end_clean();
+
+                    return Excel::download(
+                        new StockOpnameExport($this->record),
+                        "Template-SO-{$this->record->code}.xlsx"
+                    );
+                }),
+
+            // STEP 2: IMPORT (Optimasi Background Process)
             Actions\Action::make('importResults')
                 ->label('2. Upload Hasil SO')
                 ->icon('heroicon-o-document-arrow-up')
@@ -39,50 +48,53 @@ class EditStockOpname extends EditRecord
                         ->label('Pilih File Excel yang Sudah Diisi')
                         ->disk('public')
                         ->directory('temp-imports')
-                        ->visibility('public')
                         ->required(),
                 ])
                 ->action(function (array $data) {
-                    // Eksekusi Import
-                    Excel::import(new StockOpnameImport, storage_path('app/public/' . $data['attachment']));
+                    ini_set('memory_limit', '512M');
+                    ini_set('max_execution_time', '300');
 
-                    Notification::make()
-                        ->title('Data Fisik Berhasil Diupdate!')
-                        ->success()
-                        ->send();
+                    try {
+                        Excel::import(new StockOpnameImport, storage_path('app/public/' . $data['attachment']));
 
-                    // REFRESH DATA: Biar angka di Repeater bawah langsung berubah
-                    $this->refreshFormData(['details']);
+                        Notification::make()
+                            ->title('Data Fisik Berhasil Diupdate!')
+                            ->success()
+                            ->send();
+
+                        // Refresh data supaya angka fisik muncul
+                        $this->refreshFormData(['details']);
+                    } catch (\Exception $e) {
+                        Notification::make()
+                            ->title('Gagal Import: ' . $e->getMessage())
+                            ->danger()
+                            ->persistent()
+                            ->send();
+                    }
                 }),
 
-            // STEP 3: FINALIZE (Update stok gudang yang sesungguhnya)
+            // STEP 3: FINALIZE
             Actions\Action::make('Finalize')
-                ->label('3. Finalisasi & Update Stok')
+                ->label('3. Finalisasi')
                 ->icon('heroicon-o-check-circle')
                 ->color('success')
                 ->requiresConfirmation()
-                ->modalHeading('Konfirmasi Finalisasi')
-                ->modalDescription('Tindakan ini akan merubah jumlah stok di gudang secara permanen. Pastikan input fisik sudah benar!')
                 ->hidden(fn($record) => $record->status === 'PROCESSED')
                 ->action(function ($record) {
+                    ini_set('max_execution_time', '600'); // Finalisasi stok banyak butuh waktu
+
                     DB::transaction(function () use ($record) {
+                        // Pakai chunking atau direct update biar gak memory leak
                         foreach ($record->details as $detail) {
-                            $inventory = \App\Models\InventoryStock::where('item_id', $detail->item_id)
+                            \App\Models\InventoryStock::where('item_id', $detail->item_id)
                                 ->where('warehouse_id', $record->warehouse_id)
-                                ->first();
-
-                            if ($inventory) {
-                                // Update stok gudang jadi angka FISIK hasil opname
-                                $inventory->update(['quantity' => $detail->physical_qty]);
-                            }
+                                ->update(['quantity' => $detail->physical_qty]);
                         }
-
-                        // Ubah status jadi PROCESSED
                         $record->update(['status' => 'PROCESSED']);
                     });
 
                     Notification::make()
-                        ->title('Stok Gudang Berhasil Disinkronkan!')
+                        ->title('Stok Berhasil Disinkronkan!')
                         ->success()
                         ->send();
                 }),
