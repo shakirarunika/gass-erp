@@ -19,6 +19,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Paksa semua URL (asset, link, livewire) pake HTTPS kalau di production/tunnel
+        if (config('app.env') === 'production' || env('FORCE_HTTPS', false)) {
+            \URL::forceScheme('https');
+        }
     }
 }
