@@ -40,6 +40,7 @@ class AdminPanelProvider extends PanelProvider
             ->login()
             ->profile()
             ->brandName('G.A.S.S. | GA Stock System')
+            ->favicon(asset('images/favicon.ico'))
             ->sidebarCollapsibleOnDesktop()
             ->colors([
                 'primary' => Color::Slate,
