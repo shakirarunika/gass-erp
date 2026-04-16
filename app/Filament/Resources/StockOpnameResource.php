@@ -48,7 +48,7 @@ class StockOpnameResource extends Resource
                                 return collect($details)->contains(fn($item) => filled($item['item_id'] ?? null));
                             })
                             ->dehydrated()
-                            ->afterStateUpdated(function ($state, Set $set) {
+                            /* ->afterStateUpdated(function ($state, Set $set) {
                                 if (! $state) {
                                     $set('details', []);
                                     return;
@@ -72,7 +72,7 @@ class StockOpnameResource extends Resource
                                 })->toArray();
 
                                 $set('details', $dataRepeater);
-                            })
+                            }) */
                             ->helperText('Dropdown terkunci jika sudah ada barang di daftar. Hapus barang untuk ganti gudang.'),
 
                         Forms\Components\DatePicker::make('opname_date')

@@ -43,6 +43,23 @@ class StockOpname extends Model
                 $model->code = 'SO-' . now()->format('Ym') . '-' . str_pad($count, 3, '0', STR_PAD_LEFT);
             }
         });
+
+        static::created(function ($model) {
+            // Begitu Header SO berhasil disimpan, server otomatis buatin detailnya di background
+            $allItems = \App\Models\Item::all();
+
+            foreach ($allItems as $item) {
+                $stock = \App\Models\InventoryStock::where('item_id', $item->id)
+                    ->where('warehouse_id', $model->warehouse_id)
+                    ->first();
+
+                $model->details()->create([
+                    'item_id'    => $item->id,
+                    'system_qty' => $stock ? $stock->quantity : 0,
+                    'physical_qty' => 0,
+                ]);
+            }
+        });
     }
 
     // 👇 WAJIB ADA buat Repeater di Resource
