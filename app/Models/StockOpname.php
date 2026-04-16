@@ -35,7 +35,11 @@ class StockOpname extends Model
     {
         static::creating(function ($model) {
             if (empty($model->code)) {
-                $count = static::whereMonth('created_at', now()->month)->count() + 1;
+                // Kita hitung data yang bulannya SAMA dan tahunnya SAMA dengan sekarang
+                $count = static::whereYear('created_at', now()->year)
+                    ->whereMonth('created_at', now()->month)
+                    ->count() + 1;
+
                 $model->code = 'SO-' . now()->format('Ym') . '-' . str_pad($count, 3, '0', STR_PAD_LEFT);
             }
         });
