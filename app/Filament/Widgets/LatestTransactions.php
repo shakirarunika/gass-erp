@@ -7,22 +7,27 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
 
+/**
+ * Widget Transaksi Terkini.
+ *
+ * Menampilkan daftar 5 transaksi terakhir secara realtime di dashboard.
+ */
 class LatestTransactions extends BaseWidget
 {
     protected static ?string $heading = 'Transaksi Terkini (Realtime)';
 
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     public function table(Table $table): Table
     {
         return $table
             ->query(
-                Transaction::latest()->limit(5) // Ambil 5 terbaru aja
+                Transaction::latest()->limit(5)
             )
             ->columns([
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Waktu')
-                    ->since(), // Tampilannya: "5 minutes ago" (Keren!)
+                    ->since(),
 
                 Tables\Columns\TextColumn::make('code')
                     ->label('Kode')
@@ -39,10 +44,10 @@ class LatestTransactions extends BaseWidget
                 Tables\Columns\TextColumn::make('status')
                     ->badge(),
             ])
-            ->paginated(false) // Gak usah paging, cuma intip doang
+            ->paginated(false)
             ->actions([
                 Tables\Actions\Action::make('open')
-                    ->url(fn(Transaction $record) => route('filament.admin.resources.transactions.edit', $record))
+                    ->url(fn (Transaction $record) => route('filament.admin.resources.transactions.edit', $record))
                     ->icon('heroicon-m-eye'),
             ]);
     }

@@ -6,18 +6,25 @@ use App\Models\Transaction;
 use Filament\Widgets\ChartWidget;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Widget Top Departemen Chart.
+ *
+ * Menampilkan top 5 departemen dengan frekuensi permintaan barang (OUT)
+ * tertinggi. Saat ini disembunyikan dari dashboard (canView = false).
+ */
 class TopDepartmentChart extends ChartWidget
 {
+    protected static ?string $heading = 'Top 5 Departemen Paling Boros (Frekuensi)';
+    
+    protected static ?int $sort = 3;
+
     public static function canView(): bool
     {
-        return false; // Paksa return false biar gak muncul
+        return false;
     }
-    protected static ?string $heading = 'Top 5 Departemen Paling Boros (Frekuensi)';
-    protected static ?int $sort = 3;
 
     protected function getData(): array
     {
-        // Logic: Hitung transaksi OUT, group by Department, ambil 5 terbanyak
         $data = Transaction::query()
             ->join('departments', 'transactions.department_id', '=', 'departments.id')
             ->select('departments.name', DB::raw('count(*) as total'))
@@ -30,15 +37,15 @@ class TopDepartmentChart extends ChartWidget
         return [
             'datasets' => [
                 [
-                    'label' => 'Jumlah Permintaan',
-                    'data' => $data->pluck('total'),
+                    'label'           => 'Jumlah Permintaan',
+                    'data'            => $data->pluck('total'),
                     'backgroundColor' => [
                         '#3b82f6',
                         '#8b5cf6',
                         '#ec4899',
                         '#f97316',
-                        '#eab308'
-                    ], // Warna-warni biar cantik
+                        '#eab308',
+                    ],
                 ],
             ],
             'labels' => $data->pluck('name'),
@@ -47,6 +54,6 @@ class TopDepartmentChart extends ChartWidget
 
     protected function getType(): string
     {
-        return 'bar'; // Grafik Batang
+        return 'bar';
     }
 }

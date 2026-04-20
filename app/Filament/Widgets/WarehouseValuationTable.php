@@ -7,10 +7,17 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
 
+/**
+ * Widget Tabel Rincian Valuasi Gudang.
+ *
+ * Menampilkan tabel rekapitulasi total item dan total valuasi aset
+ * (Rupiah) untuk masing-masing gudang.
+ */
 class WarehouseValuationTable extends BaseWidget
 {
     protected static ?string $heading = 'Rincian Aset Per Lokasi Gudang';
-    protected int | string | array $columnSpan = 1; // Biar bisa bagi dua lapak di bawah
+    
+    protected int|string|array $columnSpan = 1;
 
     public function table(Table $table): Table
     {
@@ -26,12 +33,11 @@ class WarehouseValuationTable extends BaseWidget
                     ->sum('stocks', 'quantity')
                     ->badge(),
 
-                // Logic Hitung Valuasi per baris gudang
                 Tables\Columns\TextColumn::make('valuation')
                     ->label('Total Valuasi')
                     ->money('IDR')
                     ->state(function (Warehouse $record) {
-                        return $record->stocks->sum(fn($stock) => $stock->quantity * ($stock->item->avg_cost ?? 0));
+                        return $record->stocks->sum(fn ($stock) => $stock->quantity * ($stock->item->avg_cost ?? 0));
                     }),
             ])
             ->paginated(false);

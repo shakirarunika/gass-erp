@@ -7,26 +7,30 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
 
+/**
+ * Widget Item Stok Kritis.
+ *
+ * Menampilkan 5 barang dengan stok fisik di bawah atau sama dengan
+ * batas aman (min_stock) yang telah ditentukan.
+ */
 class LatestLowStockItems extends BaseWidget
 {
-
     protected static ?int $sort = 4;
-    protected int | string | array $columnSpan = 'full'; // Menguasai baris bawah
+    
+    protected int|string|array $columnSpan = 'full';
 
-    // Beri judul yang tegas
     protected static ?string $heading = 'DAFTAR BARANG DIBAWAH MINIMAL STOK';
 
     public function table(Table $table): Table
     {
         return $table
             ->query(
-                // Ambil barang yang (Stok Fisik) <= (Min Stock)
                 Item::query()
                     ->whereRaw(
                         '(SELECT COALESCE(SUM(quantity), 0) FROM inventory_stocks WHERE inventory_stocks.item_id = items.id) <= min_stock'
                     )
                     ->orderBy('name', 'asc')
-                    ->limit(5) // Cukup 5 teratas biar gak menuhin layar
+                    ->limit(5)
             )
             ->columns([
                 Tables\Columns\TextColumn::make('name')
@@ -42,7 +46,7 @@ class LatestLowStockItems extends BaseWidget
                     ->default(0)
                     ->badge()
                     ->color(
-                        fn($state, Item $record): string =>
+                        fn ($state, Item $record): string =>
                         $state <= 0 ? 'danger' : ($state <= $record->min_stock ? 'warning' : 'success')
                     ),
 
@@ -54,10 +58,9 @@ class LatestLowStockItems extends BaseWidget
                     ->label('Satuan'),
             ])
             ->actions([
-                // Tombol cepat buat edit atau tambah stok
                 Tables\Actions\Action::make('view')
                     ->label('Detail')
-                    ->url(fn(Item $record): string => "/admin/items/{$record->id}/edit")
+                    ->url(fn (Item $record): string => "/admin/items/{$record->id}/edit")
                     ->icon('heroicon-m-eye'),
             ]);
     }

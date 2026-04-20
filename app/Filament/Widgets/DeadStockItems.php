@@ -8,18 +8,24 @@ use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
 use Illuminate\Database\Eloquent\Builder;
 
+/**
+ * Widget Barang Mati (Dead Stock).
+ *
+ * Menampilkan daftar barang yang memiliki stok lebih dari nol,
+ * tetapi tidak memiliki pergerakan transaksi dalam 6 bulan terakhir.
+ */
 class DeadStockItems extends BaseWidget
 {
     protected static ?string $heading = 'Barang Mati (Tidak Bergerak > 6 Bulan)';
 
     protected static ?int $sort = 3;
-    protected int | string | array $columnSpan = 1; // Setengah layar sisanya
+    
+    protected int|string|array $columnSpan = 1;
 
     public function table(Table $table): Table
     {
         return $table
             ->query(
-                // LOGIKANYA: Barang yang punya stok > 0, tapi GAK ADA transaksi dalam 6 bulan terakhir
                 Item::query()
                     ->whereHas('stocks', function (Builder $query) {
                         $query->where('quantity', '>', 0);
@@ -41,7 +47,7 @@ class DeadStockItems extends BaseWidget
 
                 Tables\Columns\TextColumn::make('stocks_sum_quantity')
                     ->label('Stok Mengendap')
-                    ->sum('stocks', 'quantity') // Otomatis totalin stok dari semua gudang
+                    ->sum('stocks', 'quantity')
                     ->badge()
                     ->color('danger'),
 
@@ -61,12 +67,13 @@ class DeadStockItems extends BaseWidget
             ->actions([
                 Tables\Actions\Action::make('view')
                     ->label('Cek Detail')
-                    ->url(fn(Item $record): string => "/admin/items/{$record->id}/edit")
+                    ->url(fn (Item $record): string => "/admin/items/{$record->id}/edit")
                     ->icon('heroicon-m-eye'),
             ]);
     }
+
     protected function getTableAttributes(): array
     {
-        return ['style' => 'height: 400px; overflow-y: auto;']; // Tinggi harus sama!
+        return ['style' => 'height: 400px; overflow-y: auto;'];
     }
 }

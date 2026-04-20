@@ -7,13 +7,20 @@ use App\Models\InventoryStock;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
-use Illuminate\Support\Facades\DB;
 
+/**
+ * Widget Tabel Valuasi Kategori.
+ *
+ * Menampilkan rincian nilai aset gudang per kategori dalam bentuk tabel
+ * yang dilengkapi dengan fitur grand total di bagian bawah.
+ */
 class CategoryValueTable extends BaseWidget
 {
     protected static ?string $heading = 'Komposisi Nilai Aset Per Kategori';
+    
     protected static ?int $sort = 2;
-    protected int | string | array $columnSpan = 1; // Mengambil setengah layar
+    
+    protected int|string|array $columnSpan = 1;
 
     public function table(Table $table): Table
     {
@@ -25,15 +32,15 @@ class CategoryValueTable extends BaseWidget
                         'total_val' => InventoryStock::query()
                             ->join('items', 'items.id', '=', 'inventory_stocks.item_id')
                             ->whereColumn('items.category_id', 'categories.id')
-                            ->selectRaw('SUM(inventory_stocks.quantity * items.avg_cost)')
+                            ->selectRaw('SUM(inventory_stocks.quantity * items.avg_cost)'),
                     ])
                     ->orderByDesc('total_val')
             )
             ->columns([
                 Tables\Columns\TextColumn::make('id')
                     ->label('')
-                    ->formatStateUsing(fn() => ' ')
-                    ->extraAttributes(fn($record) => [
+                    ->formatStateUsing(fn () => ' ')
+                    ->extraAttributes(fn ($record) => [
                         'style' => 'background-color: ' . $this->getCategoryColor($record->id) . '; width: 12px; border-radius: 99px;',
                     ]),
 
@@ -43,21 +50,19 @@ class CategoryValueTable extends BaseWidget
 
                 Tables\Columns\TextColumn::make('total_val')
                     ->label('Total Valuasi')
-                    ->formatStateUsing(fn($state) => 'Rp ' . number_format($state ?? 0, 0, ',', '.'))
+                    ->formatStateUsing(fn ($state) => 'Rp ' . number_format($state ?? 0, 0, ',', '.'))
                     ->color('success')
                     ->weight('bold')
                     ->alignEnd()
-                    // INI BUAT NAMPILIN TOTAL DI BAWAH
                     ->summarize(
                         Tables\Columns\Summarizers\Sum::make()
                             ->label('GRAND TOTAL')
-                            ->formatStateUsing(fn($state) => 'Rp ' . number_format($state, 0, ',', '.'))
+                            ->formatStateUsing(fn ($state) => 'Rp ' . number_format($state, 0, ',', '.'))
                     ),
             ])
             ->paginated(false);
     }
 
-    // MATCHING TINGGI (SAMA DENGAN CHART)
     protected function getTableAttributes(): array
     {
         return ['style' => 'height: 400px; overflow-y: auto;'];
@@ -66,6 +71,7 @@ class CategoryValueTable extends BaseWidget
     private function getCategoryColor($id): string
     {
         $colors = ['#36A2EB', '#FF6384', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#2ecc71', '#34495e'];
+
         return $colors[$id % count($colors)] ?? '#94a3b8';
     }
 }

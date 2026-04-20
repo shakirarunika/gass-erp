@@ -5,12 +5,19 @@ namespace App\Filament\Widgets;
 use App\Models\StockOpnameDetail;
 use Filament\Widgets\ChartWidget;
 
+/**
+ * Widget Chart Tren Stock Opname.
+ *
+ * Menampilkan grafik bar dan line gabungan untuk membandingkan
+ * nilai valuasi fisik vs tingkat akurasi audit per bulan.
+ */
 class StockOpnameTrendChart extends ChartWidget
 {
     protected static ?string $maxHeight = '300px';
+    
     protected static ?string $heading = 'Trend Akurasi & Valuasi SO';
 
-    protected int | string | array $columnSpan = 'full';
+    protected int|string|array $columnSpan = 'full';
 
     protected function getData(): array
     {
@@ -30,19 +37,19 @@ class StockOpnameTrendChart extends ChartWidget
         return [
             'datasets' => [
                 [
-                    'label' => 'Valuasi Fisik (Rp)',
-                    'data' => $data->pluck('total_valuation')->map(fn($v) => (float) $v)->toArray(),
+                    'label'           => 'Valuasi Fisik (Rp)',
+                    'data'            => $data->pluck('total_valuation')->map(fn ($v) => (float) $v)->toArray(),
                     'backgroundColor' => '#36A2EB',
-                    'borderColor' => '#36A2EB',
-                    'yAxisID' => 'y',
+                    'borderColor'     => '#36A2EB',
+                    'yAxisID'         => 'y',
                 ],
                 [
-                    'label' => 'Akurasi (%)',
-                    'data' => $data->pluck('accuracy')->map(fn($v) => (float) $v)->toArray(),
-                    'borderColor' => '#FF6384',
+                    'label'           => 'Akurasi (%)',
+                    'data'            => $data->pluck('accuracy')->map(fn ($v) => (float) $v)->toArray(),
+                    'borderColor'     => '#FF6384',
                     'backgroundColor' => '#FF6384',
-                    'type' => 'line',
-                    'yAxisID' => 'y1',
+                    'type'            => 'line',
+                    'yAxisID'         => 'y1',
                 ],
             ],
             'labels' => $data->pluck('month')->toArray(),
@@ -58,25 +65,23 @@ class StockOpnameTrendChart extends ChartWidget
     {
         return [
             'maintainAspectRatio' => false,
-            'scales' => [
+            'scales'              => [
                 'y' => [
                     'beginAtZero' => true,
-                    'type' => 'linear',
-                    'display' => true,
-                    'position' => 'left',
-                    'ticks' => [
-                        // KELIPATAN 20 JUTA
+                    'type'        => 'linear',
+                    'display'     => true,
+                    'position'    => 'left',
+                    'ticks'       => [
                         'stepSize' => 20000000,
                     ],
                 ],
                 'y1' => [
-                    'type' => 'linear',
-                    'display' => true,
+                    'type'     => 'linear',
+                    'display'  => true,
                     'position' => 'right',
-                    'min' => 0,
-                    'max' => 100,
-                    'ticks' => [
-                        // KELIPATAN 20%
+                    'min'      => 0,
+                    'max'      => 100,
+                    'ticks'    => [
                         'stepSize' => 20,
                     ],
                     'grid' => [
