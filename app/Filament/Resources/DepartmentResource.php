@@ -6,20 +6,31 @@ use App\Filament\Resources\DepartmentResource\Pages;
 use App\Models\Department;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Notifications\Notification; // Import Notifikasi
 
+/**
+ * Resource untuk mengelola data Departemen.
+ *
+ * Departemen merupakan unit organisasi yang digunakan untuk
+ * mengelompokkan user/karyawan dan sebagai referensi pada
+ * transaksi pemakaian barang (OUT - USAGE).
+ * Dilengkapi proteksi delete agar departemen yang masih
+ * memiliki karyawan tidak dapat dihapus.
+ */
 class DepartmentResource extends Resource
 {
     protected static ?string $model = Department::class;
+
     protected static ?string $navigationIcon = 'heroicon-o-briefcase';
     protected static ?string $navigationGroup = 'Master Data';
-
-    // Set urutan ke 2 (Setelah Kategori, Sebelum Item)
     protected static ?int $navigationSort = 2;
 
+    /**
+     * Definisi form untuk Create & Edit departemen.
+     */
     public static function form(Form $form): Form
     {
         return $form
@@ -34,25 +45,19 @@ class DepartmentResource extends Resource
                             ->maxLength(255)
                             ->placeholder('Contoh: Human Resources & General Affairs'),
 
-                        Forms\Components\TextInput::make('code')
-                            ->label('Kode Singkatan')
-                            ->required()
-                            ->unique(ignoreRecord: true)
-                            ->maxLength(10)
-                            ->placeholder('Contoh: HRGA')
-                            // Validasi: Hanya Huruf Besar & Angka (Tanpa Spasi)
-                            ->regex('/^[A-Z0-9]+$/')
-                            ->validationMessages([
-                                'regex' => 'Kode hanya boleh Huruf Kapital dan Angka (tanpa spasi/simbol).',
-                            ])
-                            // UX: Visual jadi huruf besar
-                            ->extraInputAttributes(['style' => 'text-transform:uppercase'])
-                            // Backend: Simpan sebagai huruf besar
-                            ->dehydrateStateUsing(fn(string $state): string => strtoupper($state)),
-                    ])->columns(2)
+                        self::uppercaseCodeField(
+                            label: 'Kode Singkatan',
+                            maxLength: 10,
+                            placeholder: 'Contoh: HRGA'
+                        ),
+                    ])
+                    ->columns(2),
             ]);
     }
 
+    /**
+     * Definisi tabel untuk halaman daftar departemen.
+     */
     public static function table(Table $table): Table
     {
         return $table
@@ -70,10 +75,9 @@ class DepartmentResource extends Resource
                     ->searchable()
                     ->sortable(),
 
-                // Opsional: Tampilkan jumlah karyawan jika relasi sudah ada
                 Tables\Columns\TextColumn::make('users_count')
                     ->label('Jml Karyawan')
-                    ->counts('users') // Pastikan ada relasi 'users' di Model Department
+                    ->counts('users')
                     ->badge()
                     ->color('gray')
                     ->sortable(),
@@ -83,26 +87,10 @@ class DepartmentResource extends Resource
                     ->dateTime('d M Y')
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
-            ->filters([
-                //
-            ])
+            ->filters([])
             ->actions([
                 Tables\Actions\EditAction::make(),
-
-                // PROTEKSI DELETE: Cek apakah ada karyawan di departemen ini?
-                Tables\Actions\DeleteAction::make()
-                    ->before(function (Tables\Actions\DeleteAction $action, Department $record) {
-                        // Pastikan relasi 'users' sudah dibuat di Model Department
-                        if ($record->users()->exists()) {
-                            Notification::make()
-                                ->danger()
-                                ->title('Gagal Menghapus')
-                                ->body('Departemen ini masih memiliki Karyawan aktif. Pindahkan karyawan terlebih dahulu.')
-                                ->send();
-
-                            $action->cancel();
-                        }
-                    }),
+                self::protectedDeleteAction(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -118,5 +106,54 @@ class DepartmentResource extends Resource
             'create' => Pages\CreateDepartment::route('/create'),
             'edit'   => Pages\EditDepartment::route('/{record}/edit'),
         ];
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Reusable Field & Action Builders
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * Field kode dengan validasi uppercase dan alfanumerik.
+     */
+    private static function uppercaseCodeField(
+        string $label = 'Kode',
+        int $maxLength = 10,
+        string $placeholder = ''
+    ): Forms\Components\TextInput {
+        return Forms\Components\TextInput::make('code')
+            ->label($label)
+            ->required()
+            ->unique(ignoreRecord: true)
+            ->maxLength($maxLength)
+            ->placeholder($placeholder)
+            ->regex('/^[A-Z0-9]+$/')
+            ->validationMessages([
+                'regex' => 'Kode hanya boleh Huruf Kapital dan Angka (tanpa spasi/simbol).',
+            ])
+            ->extraInputAttributes(['style' => 'text-transform:uppercase'])
+            ->dehydrateStateUsing(fn (string $state): string => strtoupper($state));
+    }
+
+    /**
+     * Aksi delete dengan proteksi relasi karyawan.
+     *
+     * Mencegah penghapusan departemen jika masih memiliki user aktif.
+     */
+    private static function protectedDeleteAction(): Tables\Actions\DeleteAction
+    {
+        return Tables\Actions\DeleteAction::make()
+            ->before(function (Tables\Actions\DeleteAction $action, Department $record) {
+                if ($record->users()->exists()) {
+                    Notification::make()
+                        ->danger()
+                        ->title('Gagal Menghapus')
+                        ->body('Departemen ini masih memiliki Karyawan aktif. Pindahkan karyawan terlebih dahulu.')
+                        ->send();
+
+                    $action->cancel();
+                }
+            });
     }
 }

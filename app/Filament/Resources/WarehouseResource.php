@@ -8,18 +8,27 @@ use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
-use Filament\Tables\Table;
 use Filament\Tables\Filters\TernaryFilter;
+use Filament\Tables\Table;
 
+/**
+ * Resource untuk mengelola data Gudang.
+ *
+ * Gudang merupakan lokasi penyimpanan fisik barang yang berada
+ * di bawah sebuah Plant. Setiap gudang memiliki kode unik dan
+ * menjadi referensi utama pada transaksi serta monitoring stok.
+ */
 class WarehouseResource extends Resource
 {
     protected static ?string $model = Warehouse::class;
+
     protected static ?string $navigationIcon = 'heroicon-o-building-office-2';
     protected static ?string $navigationGroup = 'Master Data';
-
-    // Urutan 3: Setelah Category(1) dan Unit(2)
     protected static ?int $navigationSort = 3;
 
+    /**
+     * Definisi form untuk Create & Edit gudang.
+     */
     public static function form(Form $form): Form
     {
         return $form
@@ -45,17 +54,20 @@ class WarehouseResource extends Resource
                             ->unique(ignoreRecord: true)
                             ->maxLength(10)
                             ->extraInputAttributes(['style' => 'text-transform:uppercase'])
-                            // 👇 Paksa Uppercase sebelum simpan
-                            ->dehydrateStateUsing(fn($state) => strtoupper($state)),
+                            ->dehydrateStateUsing(fn ($state) => strtoupper($state)),
 
                         Forms\Components\Toggle::make('is_active')
                             ->label('Status Aktif')
                             ->default(true)
                             ->required(),
-                    ])->columns(2)
+                    ])
+                    ->columns(2),
             ]);
     }
 
+    /**
+     * Definisi tabel untuk halaman daftar gudang.
+     */
     public static function table(Table $table): Table
     {
         return $table
@@ -76,7 +88,6 @@ class WarehouseResource extends Resource
                     ->label('Nama Gudang')
                     ->searchable(),
 
-                // 👇 Fitur Pantau: Ada berapa item unik di gudang ini?
                 Tables\Columns\TextColumn::make('stocks_count')
                     ->label('Varian Barang')
                     ->counts('stocks')
@@ -100,9 +111,9 @@ class WarehouseResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListWarehouses::route('/'),
+            'index'  => Pages\ListWarehouses::route('/'),
             'create' => Pages\CreateWarehouse::route('/create'),
-            'edit' => Pages\EditWarehouse::route('/{record}/edit'),
+            'edit'   => Pages\EditWarehouse::route('/{record}/edit'),
         ];
     }
 }

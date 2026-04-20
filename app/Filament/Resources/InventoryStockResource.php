@@ -8,33 +8,55 @@ use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
-use Filament\Tables\Table;
-use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use pxlrbt\FilamentExcel\Actions\Tables\ExportAction;
-use pxlrbt\FilamentExcel\Exports\ExcelExport;
-use pxlrbt\FilamentExcel\Columns\Column;
 
+/**
+ * Resource untuk menampilkan Stok Real-time per Gudang.
+ *
+ * Resource ini bersifat read-only untuk data stok (quantity, item, warehouse)
+ * karena stok dihitung secara otomatis oleh sistem berdasarkan transaksi.
+ * Satu-satunya field yang dapat diubah adalah lokasi rak penyimpanan.
+ *
+ * Fitur utama:
+ * - Monitoring stok real-time per gudang
+ * - Filter stok menipis (low stock alert)
+ * - Kalkulasi nilai aset (quantity × harga modal)
+ * - Export data stok ke Excel
+ */
 class InventoryStockResource extends Resource
 {
     protected static ?string $model = InventoryStock::class;
+
     protected static ?string $navigationIcon = 'heroicon-o-squares-2x2';
     protected static ?string $navigationLabel = 'Stok Real-time';
     protected static ?string $navigationGroup = 'Monitoring Stok';
     protected static ?int $navigationSort = 1;
 
-    // 👇 PENTING: Matikan Create & Delete agar stok murni hasil kalkulasi sistem
+    /**
+     * Nonaktifkan fitur Create — stok hanya dibuat via transaksi.
+     */
     public static function canCreate(): bool
     {
         return false;
     }
 
+    /**
+     * Nonaktifkan fitur Delete — stok tidak boleh dihapus manual.
+     */
     public static function canDelete(mixed $record): bool
     {
         return false;
     }
 
+    /**
+     * Definisi form untuk Edit (hanya update lokasi rak).
+     *
+     * Section pertama menampilkan data stok yang terkunci (read-only).
+     * Section kedua berisi field lokasi rak yang bisa diubah.
+     */
     public static function form(Form $form): Form
     {
         return $form
@@ -45,8 +67,8 @@ class InventoryStockResource extends Resource
                         Forms\Components\Select::make('warehouse_id')
                             ->relationship('warehouse', 'name')
                             ->label('Gudang')
-                            ->disabled() // Terkunci
-                            ->dehydrated(false), // Gak usah dikirim lagi ke DB saat save
+                            ->disabled()
+                            ->dehydrated(false),
 
                         Forms\Components\Select::make('item_id')
                             ->relationship('item', 'name')
@@ -59,7 +81,8 @@ class InventoryStockResource extends Resource
                             ->numeric()
                             ->disabled()
                             ->dehydrated(false),
-                    ])->columns(3),
+                    ])
+                    ->columns(3),
 
                 Forms\Components\Section::make('Manajemen Lokasi')
                     ->description('Anda hanya diperbolehkan mengubah lokasi penyimpanan.')
@@ -70,17 +93,21 @@ class InventoryStockResource extends Resource
                             ->helperText('Update lokasi jika barang dipindahkan.')
                             ->required()
                             ->maxLength(255),
-                    ])
+                    ]),
             ]);
     }
 
+    /**
+     * Definisi tabel untuk halaman monitoring stok.
+     */
     public static function table(Table $table): Table
     {
         return $table
             ->striped()
-            ->modifyQueryUsing(fn(Builder $query) => $query->with(['item.unit', 'warehouse', 'item.category']))
+            ->modifyQueryUsing(
+                fn (Builder $query) => $query->with(['item.unit', 'warehouse', 'item.category'])
+            )
             ->columns([
-                // 1. TAMBAH KATEGORI (Biar enak liat pengelompokannya)
                 Tables\Columns\TextColumn::make('item.category.name')
                     ->label('Kategori')
                     ->badge()
@@ -88,7 +115,6 @@ class InventoryStockResource extends Resource
                     ->sortable()
                     ->searchable(),
 
-                // 2. TAMBAH KODE BARANG (Berdiri sendiri biar gampang dicari)
                 Tables\Columns\TextColumn::make('item.code')
                     ->label('Kode')
                     ->copyable()
@@ -105,27 +131,8 @@ class InventoryStockResource extends Resource
                     ->label('Gudang')
                     ->sortable(),
 
-                Tables\Columns\TextColumn::make('quantity')
-                    ->label('Sisa Stok')
-                    ->numeric()
-                    ->weight('bold')
-                    ->suffix(fn(InventoryStock $record) => " " . ($record->item->unit->name ?? ''))
-                    ->color(
-                        fn(InventoryStock $record) =>
-                        $record->quantity <= ($record->item->min_stock ?? 0) ? 'danger' : 'success'
-                    )
-                    ->sortable(),
-
-                // 3. TAMBAH TOTAL VALUASI (Qty * Harga Modal)
-                Tables\Columns\TextColumn::make('total_value')
-                    ->label('Nilai Aset')
-                    ->money('IDR')
-                    ->state(function (InventoryStock $record) {
-                        return $record->quantity * ($record->item->avg_cost ?? 0);
-                    })
-                    ->color('primary')
-                    ->weight('bold')
-                    ->sortable(false), // Karena ini computed field
+                self::quantityColumn(),
+                self::assetValueColumn(),
 
                 Tables\Columns\TextColumn::make('rack_location')
                     ->label('Lokasi Rak')
@@ -140,7 +147,6 @@ class InventoryStockResource extends Resource
                     ->label('Filter Gudang')
                     ->relationship('warehouse', 'name'),
 
-                // Tambahin Filter Kategori di sini biar makin pro
                 SelectFilter::make('category_id')
                     ->label('Filter Kategori')
                     ->relationship('item.category', 'name'),
@@ -149,26 +155,13 @@ class InventoryStockResource extends Resource
                     ->label('Hanya Stok Menipis')
                     ->toggle()
                     ->query(
-                        fn(Builder $query) =>
-                        $query->whereRaw('quantity <= (SELECT min_stock FROM items WHERE items.id = inventory_stocks.item_id)')
+                        fn (Builder $query) => $query->whereRaw(
+                            'quantity <= (SELECT min_stock FROM items WHERE items.id = inventory_stocks.item_id)'
+                        )
                     ),
             ])
             ->headerActions([
-                Tables\Actions\Action::make('exportExcel')
-                    ->label('Download Data Stok')
-                    ->icon('heroicon-o-document-arrow-down')
-                    ->color('success')
-                    ->action(function (Tables\Actions\Action $action) {
-                        // Ambil query yang lagi aktif (termasuk filter di layar)
-                        $query = InventoryStock::query()
-                            ->with(['item.unit', 'warehouse', 'item.category']);
-
-                        // Download pake class yang kita buat tadi
-                        return \Maatwebsite\Excel\Facades\Excel::download(
-                            new \App\Exports\InventoryReportExport($query),
-                            'Stok-Realtime-' . date('Y-m-d') . '.xlsx'
-                        );
-                    }),
+                self::exportExcelAction(),
             ])
             ->actions([
                 Tables\Actions\EditAction::make()
@@ -184,5 +177,75 @@ class InventoryStockResource extends Resource
             'index' => Pages\ListInventoryStocks::route('/'),
             'edit'  => Pages\EditInventoryStock::route('/{record}/edit'),
         ];
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Column Builders
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * Kolom sisa stok dengan indikator warna berdasarkan minimum stok.
+     *
+     * Merah jika stok ≤ minimum, hijau jika masih aman.
+     */
+    private static function quantityColumn(): Tables\Columns\TextColumn
+    {
+        return Tables\Columns\TextColumn::make('quantity')
+            ->label('Sisa Stok')
+            ->numeric()
+            ->weight('bold')
+            ->suffix(fn (InventoryStock $record) => ' ' . ($record->item->unit->name ?? ''))
+            ->color(
+                fn (InventoryStock $record) => $record->quantity <= ($record->item->min_stock ?? 0)
+                    ? 'danger'
+                    : 'success'
+            )
+            ->sortable();
+    }
+
+    /**
+     * Kolom kalkulasi nilai aset (quantity × harga modal).
+     *
+     * Merupakan computed field sehingga tidak bisa di-sort di database.
+     */
+    private static function assetValueColumn(): Tables\Columns\TextColumn
+    {
+        return Tables\Columns\TextColumn::make('total_value')
+            ->label('Nilai Aset')
+            ->money('IDR')
+            ->state(fn (InventoryStock $record) => $record->quantity * ($record->item->avg_cost ?? 0))
+            ->color('primary')
+            ->weight('bold')
+            ->sortable(false);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Action Builders
+    |--------------------------------------------------------------------------
+    */
+
+    /**
+     * Aksi export data stok ke file Excel.
+     *
+     * Menggunakan class InventoryReportExport untuk generate file.
+     */
+    private static function exportExcelAction(): Tables\Actions\Action
+    {
+        return Tables\Actions\Action::make('exportExcel')
+            ->label('Download Data Stok')
+            ->icon('heroicon-o-document-arrow-down')
+            ->color('success')
+            ->action(function () {
+                $query = InventoryStock::query()
+                    ->with(['item.unit', 'warehouse', 'item.category']);
+
+                return \Maatwebsite\Excel\Facades\Excel::download(
+                    new \App\Exports\InventoryReportExport($query),
+                    'Stok-Realtime-' . date('Y-m-d') . '.xlsx'
+                );
+            });
     }
 }
