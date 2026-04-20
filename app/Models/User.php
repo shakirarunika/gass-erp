@@ -4,14 +4,27 @@ namespace App\Models;
 
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Spatie\Activitylog\Traits\LogsActivity;
 
-// 👇 Pastikan ada "implements FilamentUser"
+/**
+ * Model User / Pengguna Sistem.
+ *
+ * Mendukung 2 role:
+ * - ADMIN: Full akses ke seluruh fitur
+ * - STAFF: Akses operasional gudang (terbatas)
+ *
+ * @property int    $id
+ * @property string $name
+ * @property string $email
+ * @property string $password
+ * @property string $role
+ * @property int    $department_id
+ */
 class User extends Authenticatable implements FilamentUser
 {
     use HasFactory, Notifiable, LogsActivity;
@@ -20,11 +33,9 @@ class User extends Authenticatable implements FilamentUser
         'name',
         'email',
         'password',
-        'role',          // <--- Pastikan ini ada
-        'department_id', // <--- Pastikan ini ada
+        'role',
+        'department_id',
     ];
-
-    protected $guarded = [];
 
     protected $hidden = [
         'password',
@@ -33,28 +44,46 @@ class User extends Authenticatable implements FilamentUser
 
     protected $casts = [
         'email_verified_at' => 'datetime',
-        'password' => 'hashed',
+        'password'          => 'hashed',
     ];
 
-    public function department(): BelongsTo
-    {
-        return $this->belongsTo(Department::class);
-    }
+    /*
+    |--------------------------------------------------------------------------
+    | Filament Access Control
+    |--------------------------------------------------------------------------
+    */
 
-    // 👇 INI KUNCI PINTU GERBANGNYA (WAJIB ADA) 👇
+    /**
+     * Tentukan apakah user bisa mengakses panel Filament.
+     *
+     * Hanya user yang memiliki role (ADMIN/STAFF) yang diizinkan login.
+     */
     public function canAccessPanel(Panel $panel): bool
     {
-        // Izinkan SEMUA user yang punya role (ADMIN/STAFF) untuk login
-        // Kalau kolom role kosong, baru ditolak.
         return ! is_null($this->role);
-
-        // ATAU kalau mau lebih ketat:
-        // return $this->role === 'ADMIN' || $this->role === 'STAFF';
     }
 
-    // ... (fungsi activity log dll biarin aja di bawah)
+    /*
+    |--------------------------------------------------------------------------
+    | Activity Log
+    |--------------------------------------------------------------------------
+    */
+
+    /** Konfigurasi Spatie Activity Log — catat semua perubahan kolom. */
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()->logOnly(['*']);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Relationships
+    |--------------------------------------------------------------------------
+    */
+
+    /** Departemen tempat user ini ditugaskan. */
+    public function department(): BelongsTo
+    {
+        return $this->belongsTo(Department::class);
     }
 }

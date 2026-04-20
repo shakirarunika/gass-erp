@@ -281,11 +281,7 @@ class ItemResource extends Resource
                     return;
                 }
 
-                // Gunakan withTrashed() agar nomor urut tidak bentrok
-                // dengan item yang pernah di-soft-delete
-                $sequence = Item::where('category_id', $state)
-                    ->withTrashed()
-                    ->count() + 1;
+                $sequence = Item::where('category_id', $state)->count() + 1;
 
                 $generatedCode = $category->code . str_pad($sequence, 6, '0', STR_PAD_LEFT);
                 $set('code', $generatedCode);

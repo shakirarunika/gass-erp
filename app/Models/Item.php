@@ -5,52 +5,86 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany; // <--- Tambah ini
-use Spatie\Activitylog\Traits\LogsActivity;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\Activitylog\LogOptions;
-use App\Models\InventoryStock;
+use Spatie\Activitylog\Traits\LogsActivity;
 
+/**
+ * Model Barang / Item.
+ *
+ * Entitas inti sistem inventory. Setiap item memiliki kode unik,
+ * terhubung ke kategori, satuan, dan memiliki banyak stok di gudang.
+ *
+ * @property int    $id
+ * @property int    $category_id
+ * @property int    $unit_id
+ * @property string $name
+ * @property string $code
+ * @property int    $min_stock
+ * @property float  $avg_cost
+ * @property bool   $is_active
+ */
 class Item extends Model
 {
-    use HasFactory;
-    protected $guarded = [];
+    use HasFactory, LogsActivity;
 
-    use LogsActivity;
+    protected $fillable = [
+        'category_id',
+        'unit_id',
+        'name',
+        'code',
+        'min_stock',
+        'avg_cost',
+        'is_active',
+    ];
 
-    public function transactionDetails(): HasMany
-    {
-        // Item ini punya BANYAK Detail Transaksi
-        return $this->hasMany(TransactionDetail::class);
-    }
+    protected $casts = [
+        'is_active' => 'boolean',
+        'avg_cost'  => 'decimal:2',
+        'min_stock' => 'integer',
+    ];
 
+    /**
+     * Konfigurasi Spatie Activity Log.
+     *
+     * Mencatat semua perubahan kolom, hanya yang berubah,
+     * dan skip jika tidak ada perubahan.
+     */
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['*']) // Pantau SEMUA kolom
-            ->logOnlyDirty() // Cuma catat yang berubah aja (hemat database)
-            ->dontSubmitEmptyLogs(); // Kalau gak ada yang berubah, jangan nyampah
+            ->logOnly(['*'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | Relationships
+    |--------------------------------------------------------------------------
+    */
+
+    /** Kategori yang memiliki item ini. */
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
     }
 
-    // Ini yang TADI HILANG. Item harus tau stok dia ada berapa di tabel inventory.
-    public function inventoryStocks(): HasMany
-    {
-        return $this->hasMany(InventoryStock::class);
-    }
-
-    // Relasi ke Satuan
-    public function unit(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    /** Satuan pengukuran item ini. */
+    public function unit(): BelongsTo
     {
         return $this->belongsTo(Unit::class);
     }
 
-    // 👇 RELASI KE INVENTORY STOCKS 👇
-    public function stocks(): \Illuminate\Database\Eloquent\Relations\HasMany
+    /** Daftar stok item ini di berbagai gudang. */
+    public function stocks(): HasMany
     {
         return $this->hasMany(InventoryStock::class);
+    }
+
+    /** Detail transaksi yang melibatkan item ini. */
+    public function transactionDetails(): HasMany
+    {
+        return $this->hasMany(TransactionDetail::class);
     }
 }
