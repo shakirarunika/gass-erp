@@ -37,7 +37,7 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
-            ->login(\App\Filament\Pages\Auth\Login::class)
+            ->login()
             ->profile()
             ->brandName('G.A.S.S. | GA Stock System')
             ->favicon(asset('images/favicon.ico'))
