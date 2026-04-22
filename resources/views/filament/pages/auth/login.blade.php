@@ -1,218 +1,143 @@
-<x-filament-panels::page.simple>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap');
-
-        /* Background Animation */
-        body {
-            background: linear-gradient(-45deg, #0284c7, #2563eb, #3b82f6, #60a5fa);
-            background-size: 400% 400%;
-            animation: gradientBG 15s ease infinite;
-            font-family: 'Outfit', sans-serif !important;
-            height: 100vh;
-            margin: 0;
-            overflow: hidden;
-            color: #ffffff;
-        }
-
-        @keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-
-        /* Bubbles/Blobs for background */
-        .shape-blob {
-            background: #93c5fd;
-            height: 250px;
-            width: 250px;
-            border-radius: 50%;
-            position: absolute;
-            filter: blur(90px);
-            z-index: -1;
-            opacity: 0.7;
-            animation: moveBlob 12s infinite alternate ease-in-out;
-        }
-
-        .shape-blob.one {
-            top: 5%;
-            left: 15%;
-            background: #38bdf8;
-            animation-duration: 14s;
-        }
-
-        .shape-blob.two {
-            bottom: 5%;
-            right: 15%;
-            background: #818cf8;
-            animation-duration: 18s;
-            animation-direction: alternate-reverse;
-        }
-
-        @keyframes moveBlob {
-            from { transform: translate(0, 0) scale(1); }
-            to { transform: translate(60px, -60px) scale(1.3); }
-        }
-
-        /* Fix container backgrounds */
-        .fi-simple-layout {
-            background: transparent !important;
-        }
-        main {
-            background: transparent !important;
-        }
-
-        /* Glassmorphism for the main card */
-        .fi-simple-main-ctn > div {
-            background: rgba(255, 255, 255, 0.15) !important;
-            backdrop-filter: blur(20px) saturate(180%) !important;
-            -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
-            border: 1px solid rgba(255, 255, 255, 0.3) !important;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.15) !important;
-            border-radius: 24px !important;
-            padding: 2.5rem !important;
-            transition: transform 0.4s ease, box-shadow 0.4s ease;
-        }
-
-        .fi-simple-main-ctn > div:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 45px 0 rgba(0, 0, 0, 0.2) !important;
-        }
-
-        /* Typography */
-        .fi-simple-main-ctn h1, 
-        .fi-simple-main-ctn h2, 
-        .fi-simple-main-ctn span, 
-        .fi-simple-main-ctn p, 
-        .fi-simple-main-ctn label {
-            color: #ffffff !important;
-        }
+<x-filament-panels::layout.base :livewire="$this">
+    <div class="flex min-h-screen bg-white font-sans selection:bg-[#059669] selection:text-white">
         
-        .fi-simple-main-ctn p.text-sm {
-            color: #f1f5f9 !important;
+        <!-- Left Side: Branding -->
+        <div class="hidden lg:flex lg:flex-col lg:w-[55%] relative overflow-hidden bg-[#059669] text-white p-16 justify-between">
+            <!-- Background Decoration Curves (Top Right) -->
+            <div class="absolute top-[-15%] right-[-10%] w-[70%] h-[70%] rounded-full bg-white opacity-[0.03]"></div>
+            <div class="absolute top-[-25%] right-[5%] w-[80%] h-[80%] rounded-full bg-white opacity-[0.02]"></div>
+            <div class="absolute top-[5%] right-[-20%] w-[50%] h-[50%] rounded-full bg-[#047857] opacity-40"></div>
+            
+            <!-- Top Content -->
+            <div class="z-10 mt-8">
+                <!-- Logo Icon -->
+                <div class="w-16 h-16 bg-[#34d399]/20 rounded-2xl flex items-center justify-center mb-8 border border-white/10 shadow-sm backdrop-blur-md">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                </div>
+                
+                <h1 class="text-[5.5rem] font-black leading-[0.9] tracking-tighter mb-6" style="font-family: 'Arial Black', Impact, sans-serif;">
+                    BANK<br>SAMPAH
+                </h1>
+                
+                <div class="inline-block px-5 py-2 rounded-full bg-[#10b981] text-[11px] font-bold tracking-[0.2em] mt-2 border border-[#34d399]/40 shadow-sm">
+                    • PT CISARUA MOUNTAIN DAIRY TBK •
+                </div>
+            </div>
+            
+            <!-- Bottom Content -->
+            <div class="z-10 mb-8">
+                <div class="flex items-center space-x-5 mb-5">
+                    <div class="w-1 h-12 bg-[#34d399] rounded-full"></div>
+                    <p class="text-[1.35rem] italic font-medium tracking-wide">"Dasi Aya - Tiada Sisa yang Tak Berdaya"</p>
+                </div>
+                <p class="text-[10px] font-bold tracking-[0.25em] opacity-80 mt-6 uppercase">HRGA DEPARTMENT</p>
+            </div>
+        </div>
+
+        <!-- Right Side: Login Form -->
+        <div class="w-full lg:w-[45%] flex flex-col relative">
+            <div class="flex-grow flex items-center justify-center p-8 sm:p-12">
+                <div class="w-full max-w-sm">
+                    
+                    <h2 class="text-[2rem] font-black text-[#1e293b] mb-2 tracking-tight" style="font-family: 'Arial Black', Impact, sans-serif;">LOGIN</h2>
+                    <p class="text-[13px] text-gray-500 font-semibold mb-10">Gunakan Nomor Induk Karyawan untuk akses sistem.</p>
+                    
+                    <x-filament-panels::form wire:submit="authenticate">
+                        {{ $this->form }}
+
+                        <div class="mt-8">
+                            <button type="submit" class="w-full py-3.5 px-4 bg-[#059669] hover:bg-[#047857] text-white text-xs font-bold tracking-widest rounded-xl shadow-[0_8px_20px_-6px_rgba(5,150,105,0.6)] transition-all duration-200 transform hover:-translate-y-0.5">
+                                MASUK SEKARANG
+                            </button>
+                        </div>
+                    </x-filament-panels::form>
+                    
+                </div>
+            </div>
+            
+            <!-- Footer -->
+            <div class="w-full text-center pb-8 px-4">
+                <p class="text-[9px] text-gray-400 font-bold tracking-widest uppercase">
+                    &copy; 2024 HRGA DEPARTMENT &bull; MADE WITH <span class="text-red-500 text-[10px]">❤️</span> BY FAISHAL MUHAMMAD
+                </p>
+            </div>
+        </div>
+        
+    </div>
+
+    <!-- Custom CSS for form overrides to match design exactly -->
+    <style>
+        /* Form container spacing */
+        .fi-form {
+            gap: 1.5rem !important;
         }
 
-        /* Input fields glassmorphism */
+        /* Label styling */
+        .fi-fo-field-wrp-label {
+            font-size: 0.65rem !important;
+            font-weight: 800 !important;
+            color: #94a3b8 !important;
+            letter-spacing: 0.1em !important;
+            text-transform: uppercase !important;
+            margin-bottom: 0.5rem !important;
+            display: block !important;
+        }
+
+        /* Input styling */
         .fi-input-wrapper {
-            background: rgba(255, 255, 255, 0.1) !important;
-            border: 1px solid rgba(255, 255, 255, 0.2) !important;
-            backdrop-filter: blur(10px) !important;
-            transition: all 0.3s ease;
-            border-radius: 12px !important;
+            border-radius: 0.75rem !important;
+            box-shadow: none !important;
+            background-color: #f8fafc !important;
+            border: 1px solid transparent !important;
+            transition: all 0.2s ease !important;
+            overflow: hidden !important;
         }
 
         .fi-input-wrapper:focus-within {
-            background: rgba(255, 255, 255, 0.2) !important;
-            border-color: #bfdbfe !important;
-            box-shadow: 0 0 0 4px rgba(191, 219, 254, 0.3) !important;
+            background-color: white !important;
+            border-color: #10b981 !important;
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1) !important;
         }
 
         input {
-            color: white !important;
+            padding: 0.85rem 1rem !important;
+            font-family: 'Courier New', Courier, monospace !important; /* To match the 'Contoh: 04.1234' look */
+            font-size: 0.9rem !important;
+            color: #334155 !important;
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            width: 100% !important;
         }
-        
+
+        input:focus {
+            outline: none !important;
+            box-shadow: none !important;
+        }
+
         input::placeholder {
-            color: rgba(255, 255, 255, 0.7) !important;
-        }
-        
-        input:-webkit-autofill,
-        input:-webkit-autofill:hover, 
-        input:-webkit-autofill:focus, 
-        input:-webkit-autofill:active {
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: white;
-            transition: background-color 5000s ease-in-out 0s;
-            box-shadow: inset 0 0 20px 20px rgba(255, 255, 255, 0.05);
+            color: #cbd5e1 !important;
+            font-family: 'Courier New', Courier, monospace !important;
+            font-size: 0.9rem !important;
         }
 
-        /* Button styling */
-        button[type="submit"] {
-            background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
-            border: 1px solid rgba(255, 255, 255, 0.2) !important;
-            border-radius: 12px !important;
-            font-weight: 600 !important;
-            letter-spacing: 0.5px !important;
-            transition: all 0.3s ease !important;
-            box-shadow: 0 4px 15px rgba(29, 78, 216, 0.4) !important;
-            position: relative;
-            overflow: hidden;
-            color: white !important;
-        }
-
-        button[type="submit"]:hover {
-            transform: translateY(-2px) scale(1.02) !important;
-            box-shadow: 0 8px 25px rgba(29, 78, 216, 0.6) !important;
-            background: linear-gradient(135deg, #3b82f6, #2563eb) !important;
-        }
-
-        button[type="submit"]::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            transition: all 0.6s ease;
-        }
-
-        button[type="submit"]:hover::after {
-            left: 100%;
-        }
-
-        /* Checkbox styling */
+        /* Checkbox / Remember me */
         .fi-checkbox {
-            border-color: rgba(255, 255, 255, 0.4) !important;
-            background-color: rgba(255, 255, 255, 0.1) !important;
+            border-radius: 0.25rem !important;
+            border-color: #cbd5e1 !important;
         }
         .fi-checkbox:checked {
-            background-color: #2563eb !important;
-            border-color: #2563eb !important;
+            background-color: #059669 !important;
+            border-color: #059669 !important;
         }
-
-        /* Links */
-        a {
-            color: #dbeafe !important;
-            transition: all 0.3s ease !important;
-        }
-        a:hover {
-            color: #ffffff !important;
-            text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
-        }
-
-        /* Fix for filament logo */
-        .fi-logo {
-            font-family: 'Outfit', sans-serif !important;
-            font-size: 2rem !important;
-            font-weight: 700 !important;
-            color: white !important;
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-            letter-spacing: -0.5px;
-        }
-
-        /* Hide dark mode switch on login if any */
-        .fi-theme-switcher {
-            display: none !important;
+        .fi-fo-field-wrp-label[for="data.remember"] {
+            font-size: 0.8rem !important;
+            font-weight: 600 !important;
+            color: #64748b !important;
+            letter-spacing: normal !important;
+            text-transform: none !important;
         }
     </style>
-
-    <!-- Decorative blobs -->
-    <div class="shape-blob one"></div>
-    <div class="shape-blob two"></div>
-
-    @if (filament()->hasRegistration())
-        <x-slot name="subheading">
-            {{ __('filament-panels::pages/auth/login.actions.register.before') }}
-
-            {{ $this->registerAction }}
-        </x-slot>
-    @endif
-
-    <x-filament-panels::form wire:submit="authenticate">
-        {{ $this->form }}
-
-        <x-filament-panels::form.actions
-            :actions="$this->getCachedFormActions()"
-            :full-width="$this->hasFullWidthFormActions()"
-        />
-    </x-filament-panels::form>
-</x-filament-panels::page.simple>
+</x-filament-panels::layout.base>
